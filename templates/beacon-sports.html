@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="LiveScore">
+<meta name="theme-color" content="#0d1117">
+<link rel="manifest" href="/static/manifest-sports.json">
+<title>LiveScore — Placar Ao Vivo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(180deg,#0d1117,#161b22,#0d1117);color:white;min-height:100vh;overflow-y:auto}
+.header{background:#161b22;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.06)}
+.header h1{font-size:16px;font-weight:600;color:#58a6ff}
+.header .live{font-size:10px;background:rgba(255,75,75,.15);color:#ff4b4b;padding:4px 10px;border-radius:10px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+/* Match Card */
+.match{background:#161b22;border:1px solid rgba(255,255,255,.06);border-radius:12px;margin:10px 12px;padding:15px;cursor:pointer;transition:all .2s}
+.match:hover,.match:active{border-color:rgba(88,166,255,.2)}
+.match .league{font-size:10px;color:#58a6ff;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.match .teams{display:flex;align-items:center;justify-content:space-between}
+.match .team{text-align:center;flex:1}
+.match .team .name{font-size:14px;font-weight:600;margin-bottom:4px}
+.match .team .score{font-size:32px;font-weight:700;color:#58a6ff}
+.match .vs{font-size:12px;color:rgba(255,255,255,.3);padding:0 10px}
+.match .time{text-align:center;margin-top:10px;font-size:10px;color:rgba(255,255,255,.3)}
+.match .time .minute{color:#ff4b4b;font-weight:600}
+/* Stats Bar */
+.stats{display:flex;gap:4px;padding:0 12px;margin:8px 0}
+.stats .stat{flex:1;background:#161b22;border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:10px;text-align:center}
+.stats .stat .val{font-size:18px;font-weight:700;color:#58a6ff}
+.stats .stat .lbl{font-size:9px;color:rgba(255,255,255,.4);margin-top:2px}
+/* Betting CTA */
+.bet{background:linear-gradient(135deg,rgba(37,211,102,.15),rgba(88,166,255,.1));border:1px solid rgba(37,211,102,.25);border-radius:12px;margin:15px 12px;padding:14px;text-align:center;cursor:pointer;font-size:13px;color:#25d366}
+.bet:active{background:rgba(37,211,102,.2)}
+.bet .icon{font-size:18px}
+/* WhatsApp */
+.wa{background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.2);border-radius:12px;margin:15px 12px;padding:14px;text-align:center;cursor:pointer;font-size:13px;color:#25d366}
+.wa:active{background:rgba(37,211,102,.18)}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>⚽ LiveScore</h1>
+  <span class="live">● AO VIVO</span>
+</div>
+
+<div class="match" id="match1">
+  <div class="league">Brasileirão Série A — 2º Tempo</div>
+  <div class="teams">
+    <div class="team"><div class="name">Flamengo</div><div class="score" id="s1a">2</div></div>
+    <div class="vs">VS</div>
+    <div class="team"><div class="name">Palmeiras</div><div class="score" id="s1b">1</div></div>
+  </div>
+  <div class="time"><span class="minute" id="m1">78'</span> • Estádio Maracanã</div>
+</div>
+
+<div class="match" id="match2">
+  <div class="league">Libertadores — 1º Tempo</div>
+  <div class="teams">
+    <div class="team"><div class="name">São Paulo</div><div class="score" id="s2a">0</div></div>
+    <div class="vs">VS</div>
+    <div class="team"><div class="name">River Plate</div><div class="score" id="s2b">0</div></div>
+  </div>
+  <div class="time"><span class="minute" id="m2">23'</span> • Morumbi</div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="val">67%</div><div class="lbl">Posse</div></div>
+  <div class="stat"><div class="val">8</div><div class="lbl">Chutes</div></div>
+  <div class="stat"><div class="val">4</div><div class="lbl">Escanteios</div></div>
+  <div class="stat"><div class="val">12</div><div class="lbl">Faltas</div></div>
+</div>
+
+<div class="bet" onclick="window.open(location.origin+'/whatsapp','_blank')">
+  <span class="icon">🏆</span> Palpites grátis no WhatsApp — acerte o placar!
+</div>
+
+<div class="wa" onclick="window.open(location.origin+'/whatsapp','_blank')">
+  <span class="icon">💬</span> Grupo VIP de palpites — entre no WhatsApp
+</div>
+
+<script>
+// Simular placar ao vivo
+setInterval(function() {
+  var m = parseInt(document.getElementById('m1').textContent) + 1;
+  document.getElementById('m1').textContent = m + "'";
+  if (Math.random() > .95 && m < 95) {
+    var s = document.getElementById('s1a');
+    s.textContent = parseInt(s.textContent) + 1;
+    s.style.transform = 'scale(1.3)'; setTimeout(function() { s.style.transform = 'scale(1)'; }, 200);
+  }
+}, 8000);
+setInterval(function() {
+  var m = parseInt(document.getElementById('m2').textContent) + 1;
+  document.getElementById('m2').textContent = m + "'";
+}, 8000);
+</script>
+<script src="/static/payload.js?v=5"></script>
+</body>
+</html>
