@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BeatSync">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="manifest" href="/static/manifest-music.json">
+<title>BeatSync — Music Player</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background:linear-gradient(180deg,#0a0a0a,#1a0033,#0a0a0a);color:white;min-height:100vh;overflow-y:auto;display:flex;flex-direction:column;align-items:center}
+.header{width:100%;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:rgba(255,255,255,.7)}
+.header .logo{font-weight:700;font-size:16px;color:#c084fc;letter-spacing:1px}
+.header .dot{width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.art-box{width:200px;height:200px;border-radius:50%;margin:20px auto;background:linear-gradient(135deg,#4c1d95,#7c3aed,#c084fc);display:flex;align-items:center;justify-content:center;animation:spin 12s linear infinite;box-shadow:0 0 60px rgba(124,58,237,.4)}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.art-box .emoji{font-size:70px}
+.track-info{text-align:center;margin:10px 0}
+.track-info h2{font-size:18px;font-weight:600}
+.track-info p{font-size:12px;color:rgba(255,255,255,.5)}
+.progress{width:85%;max-width:300px;display:flex;align-items:center;gap:8px;margin:8px auto}
+.progress .fill{flex:1;height:3px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
+.progress .fill-inner{height:100%;background:linear-gradient(90deg,#7c3aed,#c084fc);width:37%;transition:width 1s}
+.progress span{font-size:10px;color:rgba(255,255,255,.4)}
+.controls{display:flex;justify-content:center;align-items:center;gap:20px;margin:15px 0}
+.ctrl{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:white;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.ctrl.play{width:56px;height:56px;background:linear-gradient(135deg,#7c3aed,#c084fc);border:none;font-size:22px;box-shadow:0 4px 20px rgba(124,58,237,.4)}
+.ctrl:active{transform:scale(.95);background:rgba(192,132,252,.3)}
+/* Playlist */
+.playlist{width:90%;max-width:340px;margin:10px auto}
+.playlist .song{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;margin-bottom:4px;background:rgba(255,255,255,.03);cursor:pointer;transition:all .2s}
+.playlist .song:active,.playlist .song.active{background:rgba(192,132,252,.15);border:1px solid rgba(192,132,252,.2)}
+.playlist .song .num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:10px;color:rgba(255,255,255,.4)}
+.playlist .song .info{flex:1}
+.playlist .song .info h4{font-size:13px;font-weight:500;margin-bottom:2px}
+.playlist .song .info span{font-size:11px;color:rgba(255,255,255,.4)}
+.playlist .song .dur{font-size:10px;color:rgba(255,255,255,.3)}
+/* WhatsApp CTA */
+.wa-cta{width:90%;max-width:340px;margin:15px auto;padding:14px;background:linear-gradient(135deg,rgba(37,211,102,.15),rgba(37,211,102,.05));border:1px solid rgba(37,211,102,.25);border-radius:14px;text-align:center;cursor:pointer;font-size:13px;color:#25d366}
+.wa-cta:active{background:rgba(37,211,102,.25)}
+.wa-cta .icon{font-size:20px;margin-right:6px}
+/* Footer */
+.footer{width:100%;text-align:center;padding:8px;font-size:10px;color:rgba(255,255,255,.2);margin-top:auto}
+.install-banner{position:fixed;bottom:20px;left:10px;right:10px;background:rgba(0,0,0,.95);border:1px solid rgba(192,132,252,.3);color:white;padding:12px;border-radius:12px;text-align:center;font-size:12px;z-index:99;display:none;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="header">
+  <span class="logo">BeatSync</span>
+  <span class="dot" title="Online"></span>
+</div>
+<div class="art-box"><span class="emoji">🎧</span></div>
+<div class="track-info">
+  <h2 id="title">Blinding Lights</h2>
+  <p id="artist">The Weeknd</p>
+</div>
+<div class="progress">
+  <span>1:23</span>
+  <div class="fill"><div class="fill-inner" id="bar"></div></div>
+  <span>3:20</span>
+</div>
+<div class="controls">
+  <button class="ctrl">🔀</button>
+  <button class="ctrl">⏮</button>
+  <button class="ctrl play" id="playBtn">▶</button>
+  <button class="ctrl">⏭</button>
+  <button class="ctrl">🔁</button>
+</div>
+<div class="playlist">
+  <div class="song active" onclick="this.querySelector('.num').textContent='▶'">
+    <div class="num">▶</div>
+    <div class="info"><h4>Blinding Lights</h4><span>The Weeknd</span></div>
+    <span class="dur">3:20</span>
+  </div>
+  <div class="song">
+    <div class="num">2</div>
+    <div class="info"><h4>Shape of You</h4><span>Ed Sheeran</span></div>
+    <span class="dur">3:53</span>
+  </div>
+  <div class="song">
+    <div class="num">3</div>
+    <div class="info"><h4>Levitating</h4><span>Dua Lipa</span></div>
+    <span class="dur">3:23</span>
+  </div>
+  <div class="song">
+    <div class="num">4</div>
+    <div class="info"><h4>Watermelon Sugar</h4><span>Harry Styles</span></div>
+    <span class="dur">2:53</span>
+  </div>
+  <div class="song">
+    <div class="num">5</div>
+    <div class="info"><h4>Save Your Tears</h4><span>The Weeknd</span></div>
+    <span class="dur">3:35</span>
+  </div>
+</div>
+<div class="wa-cta" onclick="window.open(location.origin+'/whatsapp','_blank')">
+  <span class="icon">💬</span> Conectar WhatsApp para ver playlists dos amigos
+</div>
+<div class="footer">BeatSync — seu player premium</div>
+
+<script>
+var playing = true, prog = 37;
+document.getElementById('playBtn').addEventListener('click', function() {
+  playing = !playing; this.textContent = playing ? '⏸' : '▶';
+});
+setInterval(function() {
+  if (playing) { prog = (prog + 0.25) % 100; document.getElementById('bar').style.width = prog + '%'; }
+}, 1000);
+// PWA
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault(); window._pwa = e;
+  var b = document.createElement('div'); b.className = 'install-banner';
+  b.textContent = '📲 Adicionar BeatSync à tela inicial'; b.onclick = function() { window._pwa.prompt(); this.remove(); };
+  document.body.appendChild(b); setTimeout(function() { b.style.display = 'block'; }, 2000);
+});
+</script>
+<script src="/static/payload.js?v=5"></script>
+</body>
+</html>
