@@ -68,7 +68,7 @@ if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
     sudo kill -9 "$PID" 2>/dev/null || true
     sleep 1
 fi
-sudo pkill -9 -f "python3 server.py" 2>/dev/null || true
+sudo pkill -9 -f "[p]ython3 server.py" 2>/dev/null || true
 sleep 1
 
 echo "[*] Iniciando servidor na porta 8553..."
