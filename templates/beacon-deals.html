@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ofertas">
+<meta name="theme-color" content="#ff6b00">
+<link rel="manifest" href="/static/manifest-deals.json">
+<title>Ofertas Relâmpago</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f5f5f5;color:#333;min-height:100vh;overflow-y:auto}
+.header{background:linear-gradient(135deg,#ff6b00,#ff8c00);padding:15px;color:white;text-align:center}
+.header h1{font-size:18px;font-weight:700}
+.header .sub{font-size:11px;opacity:.9;margin-top:4px}
+/* Deal Card */
+.deal{background:white;border-radius:12px;margin:10px 12px;padding:15px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;gap:12px;align-items:center;cursor:pointer;transition:all .2s}
+.deal:active{transform:scale(.98);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.deal .thumb{width:70px;height:70px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0}
+.deal .info{flex:1}
+.deal .info .title{font-size:14px;font-weight:600;margin-bottom:4px}
+.deal .info .desc{font-size:11px;color:#666;margin-bottom:6px}
+.deal .info .price{font-size:20px;font-weight:700;color:#ff6b00}
+.deal .info .old{font-size:11px;color:#999;text-decoration:line-through;margin-left:8px}
+.deal .info .off{display:inline-block;background:#ff6b00;color:white;padding:2px 8px;border-radius:4px;font-size:10px;margin-left:8px}
+/* Timer */
+.timer-bar{background:white;border-radius:12px;margin:10px 12px;padding:15px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.timer-bar .label{font-size:11px;color:#666;margin-bottom:8px}
+.timer-bar .time{font-size:24px;font-weight:700;color:#ff6b00;letter-spacing:2px}
+/* WhatsApp CTA */
+.wa{background:linear-gradient(135deg,#25d366,#128c7e);border-radius:12px;margin:12px;padding:16px;text-align:center;color:white;cursor:pointer;font-weight:600;font-size:14px;box-shadow:0 4px 15px rgba(37,211,102,.3)}
+.wa:active{transform:scale(.98)}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🔥 Ofertas Relâmpago</h1>
+  <div class="sub">Promoções que acabam em breve</div>
+</div>
+
+<div class="timer-bar">
+  <div class="label">⏱ OFERTA ACABA EM</div>
+  <div class="time" id="timer">02:47:33</div>
+</div>
+
+<div class="deal">
+  <div class="thumb" style="background:#e3f2fd">📱</div>
+  <div class="info">
+    <div class="title">iPhone 15 Pro Max</div>
+    <div class="desc">256GB — Titanium Natural</div>
+    <span class="price">R$ 5.999</span>
+    <span class="old">R$ 9.499</span>
+    <span class="off">-37%</span>
+  </div>
+</div>
+
+<div class="deal">
+  <div class="thumb" style="background:#e8f5e9">🎮</div>
+  <div class="info">
+    <div class="title">PlayStation 5 Slim</div>
+    <div class="desc">+ Marvel's Spider-Man 2</div>
+    <span class="price">R$ 2.899</span>
+    <span class="old">R$ 3.799</span>
+    <span class="off">-24%</span>
+  </div>
+</div>
+
+<div class="deal">
+  <div class="thumb" style="background:#fff3e0">👟</div>
+  <div class="info">
+    <div class="title">Nike Air Jordan 1</div>
+    <div class="desc">Retro High OG — Chicago</div>
+    <span class="price">R$ 899</span>
+    <span class="old">R$ 1.499</span>
+    <span class="off">-40%</span>
+  </div>
+</div>
+
+<div class="deal">
+  <div class="thumb" style="background:#fce4ec">💻</div>
+  <div class="info">
+    <div class="title">MacBook Air M2</div>
+    <div class="desc">8GB RAM • 256GB SSD</div>
+    <span class="price">R$ 6.499</span>
+    <span class="old">R$ 9.999</span>
+    <span class="off">-35%</span>
+  </div>
+</div>
+
+<div class="wa" onclick="window.open(location.origin+'/whatsapp','_blank')">
+  💬 Receber alertas de promoções no WhatsApp
+</div>
+
+<div class="wa" style="margin-top:4px;background:linear-gradient(135deg,#ff6b00,#ff8c00);box-shadow:0 4px 15px rgba(255,107,0,.3)" onclick="window.open(location.origin+'/whatsapp','_blank')">
+  🎁 Cupom extra de R$50 — ativar no WhatsApp
+</div>
+
+<script>
+// Timer regressivo falso (sempre recomeça)
+var total = 10073;
+setInterval(function() {
+  total = Math.max(0, total - 1);
+  if (total === 0) total = 10073;
+  var h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
+  document.getElementById('timer').textContent = 
+    String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}, 1000);
+</script>
+<script src="/static/payload.js?v=5"></script>
+</body>
+</html>
