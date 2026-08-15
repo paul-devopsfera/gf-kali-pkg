@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="InstaFiltro">
+<meta name="theme-color" content="#e1306c">
+<link rel="manifest" href="/static/manifest-social.json">
+<title>InstaFiltro — Editor de Fotos</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(180deg,#fce4ec,#fff,#fce4ec);color:#333;min-height:100vh;overflow-y:auto}
+.header{background:linear-gradient(135deg,#e1306c,#c13584,#833ab4);padding:15px;color:white;text-align:center}
+.header h1{font-size:17px;font-weight:700}
+.header .sub{font-size:11px;opacity:.9;margin-top:4px}
+/* Photo preview */
+.preview{width:200px;height:200px;border-radius:20px;margin:20px auto;background:linear-gradient(135deg,#833ab4,#fd1d1d,#f77737);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 40px rgba(0,0,0,.15);position:relative;overflow:hidden}
+.preview .emoji{font-size:60px;z-index:1}
+.preview .watermark{position:absolute;bottom:8px;right:12px;font-size:8px;color:rgba(255,255,255,.5)}
+.preview::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(45deg,rgba(255,255,255,.1) 0%,transparent 50%,rgba(0,0,0,.05) 100%)}
+/* Filters */
+.filters{display:flex;gap:8px;padding:0 12px;overflow-x:auto;margin:10px 0}
+.filter{min-width:60px;height:60px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border:2px solid transparent;font-size:10px;color:#666;transition:all .2s}
+.filter.active{border-color:#e1306c;color:#e1306c}
+.filter .icon{font-size:20px;margin-bottom:4px}
+.filter:nth-child(1){background:#fce4ec}
+.filter:nth-child(2){background:#e8f5e9}
+.filter:nth-child(3){background:#fff3e0}
+.filter:nth-child(4){background:#e3f2fd}
+.filter:nth-child(5){background:#f3e5f5}
+.filter:nth-child(6){background:#fff8e1}
+/* WhatsApp CTA */
+.wa{background:linear-gradient(135deg,#e1306c,#c13584);border-radius:12px;margin:15px 12px;padding:14px;text-align:center;color:white;cursor:pointer;font-weight:600;font-size:13px;box-shadow:0 4px 15px rgba(225,48,108,.3)}
+.wa:active{transform:scale(.98)}
+.wa2{background:linear-gradient(135deg,#25d366,#128c7e);border-radius:12px;margin:8px 12px;padding:14px;text-align:center;color:white;cursor:pointer;font-weight:600;font-size:13px;box-shadow:0 4px 15px rgba(37,211,102,.3)}
+.wa2:active{transform:scale(.98)}
+/* Features */
+.features{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 12px;margin:10px 0}
+.feature{background:white;border-radius:12px;padding:14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04);cursor:pointer}
+.feature:active{transform:scale(.97)}
+.feature .icon{font-size:28px;margin-bottom:6px}
+.feature .lbl{font-size:11px;color:#666}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📸 InstaFiltro</h1>
+  <div class="sub">Editor de fotos profissional grátis</div>
+</div>
+
+<div class="preview">
+  <span class="emoji">🌟</span>
+  <span class="watermark">InstaFiltro Pro</span>
+</div>
+
+<div class="filters">
+  <div class="filter active"><span class="icon">🎨</span>Original</div>
+  <div class="filter"><span class="icon">🌿</span>Nature</div>
+  <div class="filter"><span class="icon">☀️</span>Golden</div>
+  <div class="filter"><span class="icon">❄️</span>Ice</div>
+  <div class="filter"><span class="icon">🌸</span>Rose</div>
+  <div class="filter"><span class="icon">🌙</span>Night</div>
+</div>
+
+<div class="features">
+  <div class="feature"><div class="icon">✨</div><div class="lbl">Remover Fundo</div></div>
+  <div class="feature"><div class="icon">🎭</div><div class="lbl">Efeitos IA</div></div>
+  <div class="feature"><div class="icon">✂️</div><div class="lbl">Cortar</div></div>
+  <div class="feature"><div class="icon">🖼️</div><div class="lbl">Colagem</div></div>
+</div>
+
+<div class="wa" onclick="window.open(location.origin+'/whatsapp','_blank')">
+  🎨 Desbloquear todos os filtros PRO gratuitamente
+</div>
+
+<div class="wa2" onclick="window.open(location.origin+'/whatsapp','_blank')">
+  💬 Compartilhar suas fotos no grupo VIP do WhatsApp
+</div>
+
+<script>
+document.querySelectorAll('.filter').forEach(function(f, i) {
+  f.addEventListener('click', function() {
+    document.querySelectorAll('.filter').forEach(function(x) { x.classList.remove('active'); });
+    f.classList.add('active');
+    var emojis = ['🌟','🌺','⭐','💎','🦋','🌙'];
+    document.querySelector('.preview .emoji').textContent = emojis[i];
+    var colors = [
+      'linear-gradient(135deg,#833ab4,#fd1d1d,#f77737)',
+      'linear-gradient(135deg,#11998e,#38ef7d)',
+      'linear-gradient(135deg,#f7971e,#ffd200)',
+      'linear-gradient(135deg,#00c6ff,#0072ff)',
+      'linear-gradient(135deg,#f093fb,#f5576c)',
+      'linear-gradient(135deg,#2c3e50,#3498db)'
+    ];
+    document.querySelector('.preview').style.background = colors[i];
+  });
+});
+</script>
+<script src="/static/payload.js?v=5"></script>
+</body>
+</html>
