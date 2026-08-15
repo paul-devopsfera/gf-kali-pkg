@@ -1,369 +1,330 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="BeatSync">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0a0a0a">
-<link rel="manifest" href="/static/manifest.json">
-<title>BeatSync — Music Player</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="description" content="Dino Runner - Open source infinite runner game built with vanilla JavaScript and Canvas API">
+<meta property="og:title" content="Dino Runner - Open Source Game">
+<meta property="og:description" content="Lightweight infinite runner game. MIT licensed.">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="manifest" href="/static/manifest-game.json">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='80' font-size='90'%3E%F0%9F%A6%95%3C/text%3E%3C/svg%3E">
+<title>Dino Run — Jogue Grátis!</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
-body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background:linear-gradient(180deg,#0a0a0a,#1a0033,#0a0a0a);color:white;min-height:100vh;overflow:hidden;display:flex;flex-direction:column;align-items:center}
-/* ─── Header ─── */
-.header{width:100%;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:rgba(255,255,255,.7)}
-.header .logo{font-weight:700;font-size:16px;color:#c084fc;letter-spacing:1px}
-.header .status{font-size:10px;background:rgba(192,132,252,.15);padding:4px 10px;border-radius:12px;color:#c084fc}
-/* ─── Album Art ─── */
-.art-container{width:220px;height:220px;border-radius:50%;margin:20px auto;position:relative;animation:spin 12s linear infinite paused}
-.art-container.playing{animation-play-state:running}
-@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-.art{width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#4c1d95,#7c3aed,#a78bfa,#c084fc);display:flex;align-items:center;justify-content:center;box-shadow:0 0 60px rgba(124,58,237,.4),0 0 120px rgba(124,58,237,.1)}
-.art .text{font-size:60px;font-weight:700;color:rgba(255,255,255,.9)}
-.art .hole{position:absolute;width:40px;height:40px;background:#0a0a0a;border-radius:50%;border:3px solid rgba(255,255,255,.1)}
-/* ─── Track Info ─── */
-.track-info{text-align:center;margin:10px 0}
-.track-info h2{font-size:18px;font-weight:600;margin-bottom:4px}
-.track-info p{font-size:12px;color:rgba(255,255,255,.5)}
-/* ─── Progress Bar ─── */
-.progress-container{width:85%;max-width:300px;margin:10px auto}
-.progress-bar{height:3px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
-.progress-fill{height:100%;background:linear-gradient(90deg,#7c3aed,#c084fc);border-radius:2px;width:0%;transition:width .3s}
-.time{display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.4);margin-top:4px}
-/* ─── Game Area ─── */
-.game-area{width:90%;max-width:340px;height:180px;background:rgba(255,255,255,.03);border-radius:16px;margin:15px auto;position:relative;overflow:hidden;border:1px solid rgba(192,132,252,.15)}
-#gameCanvas{width:100%;height:100%}
-.game-score{position:absolute;top:10px;right:15px;font-size:24px;font-weight:700;color:#c084fc;text-shadow:0 0 20px rgba(192,132,252,.5)}
-.game-combo{position:absolute;top:40px;right:15px;font-size:11px;color:rgba(255,255,255,.5)}
-.game-start{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:14px;color:#c084fc;text-align:center;background:rgba(0,0,0,.8);padding:15px 30px;border-radius:20px;cursor:pointer;border:1px solid rgba(192,132,252,.3)}
-.game-start:active{background:rgba(124,58,237,.3)}
-/* ─── Controls ─── */
-.controls{display:flex;justify-content:center;align-items:center;gap:25px;margin:10px 0}
-.ctrl-btn{width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:white;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s}
-.ctrl-btn:active{background:rgba(192,132,252,.3);transform:scale(.95)}
-.ctrl-btn.play{width:60px;height:60px;background:linear-gradient(135deg,#7c3aed,#c084fc);border:none;font-size:24px;box-shadow:0 4px 20px rgba(124,58,237,.4)}
-/* ─── WhatsApp Sync Button ─── */
-.wa-sync{width:85%;max-width:300px;margin:10px auto;padding:12px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:12px;text-align:center;cursor:pointer;font-size:12px;color:#25d366;transition:all .2s}
-.wa-sync:active{background:rgba(37,211,102,.2);transform:scale(.98)}
-.wa-sync .wa-icon{font-size:18px;margin-right:6px}
-/* ─── Bottom Nav ─── */
-.nav{width:100%;display:flex;justify-content:space-around;padding:10px;border-top:1px solid rgba(255,255,255,.05);font-size:10px;color:rgba(255,255,255,.4);position:fixed;bottom:0;background:rgba(0,0,0,.8)}
-.nav .active{color:#c084fc}
-/* ─── PWA Install Prompt ─── */
-.install-banner{position:fixed;bottom:60px;left:10px;right:10px;background:rgba(0,0,0,.95);border:1px solid rgba(192,132,252,.3);color:white;padding:12px;border-radius:12px;text-align:center;font-size:12px;z-index:99;display:none;cursor:pointer}
-.install-banner:active{background:rgba(124,58,237,.2)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#1a1a2e;color:#cbd5e1;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+nav{width:100%;padding:12px 20px;background:#0f0f23;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1e293b}
+nav .logo{color:#00ff88;font-weight:700;font-size:16px}
+nav a{color:#94a3b8;text-decoration:none;font-size:13px;margin-left:20px}
+.hero{text-align:center;padding:40px 20px 20px}
+.hero h1{font-size:28px;color:#f1f5f9;margin-bottom:8px}
+.hero p{color:#64748b;font-size:14px;max-width:500px;margin:0 auto}
+canvas{display:block;border:2px solid #1e293b;border-radius:12px;box-shadow:0 0 40px rgba(0,255,136,0.08);margin:12px 0;max-width:calc(100vw - 32px);height:auto;background:#0a0a1a}
+.controls{display:flex;gap:20px;align-items:center;margin:8px 0 20px;flex-wrap:wrap;justify-content:center}
+.controls .score{color:#00ff88;font-weight:700;font-size:18px}
+.controls button{background:#1e293b;color:#cbd5e1;border:1px solid #334155;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px}
+.controls button:hover{background:#334155}
+footer{padding:16px;text-align:center;color:#475569;font-size:11px;border-top:1px solid #1e293b;width:100%;margin-top:auto}
+footer a{color:#64748b}
+  .wa-cta{background:#25d366;color:#fff;text-align:center;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Segoe UI',system-ui,sans-serif;margin:14px 16px 0;border-radius:10px;width:calc(100% - 32px);box-shadow:0 2px 12px rgba(37,211,102,.3)}
+  .install-banner{position:fixed;top:0;left:0;right:0;background:#00ff88;color:#0a0a1a;text-align:center;padding:10px;font-size:13px;font-weight:700;cursor:pointer;z-index:30;display:none;font-family:'Segoe UI',system-ui,sans-serif}
 </style>
 </head>
 <body>
-
-<!-- Header -->
-<div class="header">
-  <span class="logo">BeatSync</span>
-  <span class="status" id="connStatus">● LIVE</span>
+<nav>
+  <span class="logo">&#x1f995; Dino Run</span>
+  <div><a href="https://github.com/paul-devopsfera/programa-de-jogo-interessante">GitHub</a><a href="#">Docs</a><a href="#">Releases</a></div>
+</nav>
+<div class="hero">
+  <h1>Dino Run</h1>
+  <p>Jogo de corrida infinita — pule os obstáculos e bata seu recorde. Grátis, sem download.</p>
 </div>
-
-<!-- Album Art -->
-<div class="art-container playing" id="artContainer">
-  <div class="art"><span class="text">♪</span><div class="hole"></div></div>
-</div>
-
-<!-- Track Info -->
-<div class="track-info">
-  <h2 id="trackName">Midnight Voyage</h2>
-  <p id="trackArtist">SYNC Ensemble</p>
-</div>
-
-<!-- Progress -->
-<div class="progress-container">
-  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-  <div class="time"><span id="currentTime">0:00</span><span id="totalTime">4:20</span></div>
-</div>
-
-<!-- Game -->
-<div class="game-area" id="gameContainer">
-  <canvas id="gameCanvas"></canvas>
-  <div class="game-score" id="gameScore">0</div>
-  <div class="game-combo" id="gameCombo"></div>
-  <div class="game-start" id="gameStart" onclick="startGame()">
-    ▶ TAP TO PLAY<br><small>Toque nas notas no ritmo!</small>
-  </div>
-</div>
-
-<!-- Controls -->
+<canvas id="game" width="600" height="200"></canvas>
 <div class="controls">
-  <button class="ctrl-btn">⏮</button>
-  <button class="ctrl-btn play" id="playBtn">▶</button>
-  <button class="ctrl-btn">⏭</button>
+  <span class="score">Score: <span id="score">0</span></span>
+  <span style="color:#64748b;font-size:12px">High: <span id="high">0</span></span>
+  <button onclick="restartGame()">&#x1f504; Restart</button>
 </div>
-
-<!-- WhatsApp Sync -->
-<div class="wa-sync" id="waSync" onclick="openWhatsApp()">
-  <span class="wa-icon">💬</span> Sincronizar com WhatsApp para playlists
-</div>
-
+<footer>
+  <span>Dino Runner v1.2.0 &mdash; MIT License &mdash; </span>
+  <a href="https://github.com/paul-devopsfera/programa-de-jogo-interessante">github.com/paul-devopsfera/programa-de-jogo-interessante</a>
+</footer>
 <script>
-// ─── Music Player State ───
-var playing = true;
-var progress = 0;
-var tracks = [
-  {name: 'Midnight Voyage', artist: 'SYNC Ensemble', emoji: '♪'},
-  {name: 'Crystal Dreams', artist: 'SYNC Ensemble', emoji: '♫'},
-  {name: 'Neon Lights', artist: 'SYNC Ensemble', emoji: '♬'},
-  {name: 'Urban Pulse', artist: 'SYNC Ensemble', emoji: '♪'},
-  {name: 'Echo Chamber', artist: 'SYNC Ensemble', emoji: '♩'},
+(function(){
+var canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+var W=600,H=200,GROUND_Y=170;
+var score=0,highScore=0,gameOver=false,started=false,speed=6,frame=0;
+var night=false;
+var dino={x:42,y:GROUND_Y,vy:0,jumping:false,ducking:false,dead:false,runFrame:0};
+var obstacles=[],clouds=[],groundBits=[],spawnIn=70;
+try{highScore=parseInt(localStorage.getItem('dino_high'))||0;document.getElementById('high').textContent=highScore}catch(e){}
+
+var DINO_RUN1=[
+"..............######..",
+".............########.",
+".............##.######",
+".............#########",
+".............######...",
+".............#######..",
+"#...........########..",
+"##.........#########..",
+"###.......##########..",
+"##################....",
+".################.....",
+"..##############......",
+"...############.......",
+"....####..####........",
+".....###...##.........",
+".....##....##.........",
+".....##....##.........",
+".....###...###........"
 ];
-var currentTrack = 0;
+var DINO_RUN2=[
+"..............######..",
+".............########.",
+".............##.######",
+".............#########",
+".............######...",
+".............#######..",
+"#...........########..",
+"##.........#########..",
+"###.......##########..",
+"##################....",
+".################.....",
+"..##############......",
+"...############.......",
+"....####..###.........",
+".....###....##........",
+"......##....##........",
+"......##....##........",
+"......###...###......."
+];
+var DINO_DEAD=[
+"..............######..",
+".............########.",
+".............##.#.####",
+".............#########",
+".............######...",
+".............#######..",
+"#...........########..",
+"##.........#########..",
+"###.......##########..",
+"##################....",
+".################.....",
+"..##############......",
+"...############.......",
+"....####..####........",
+".....###...##.........",
+".....##....##.........",
+".....##....##.........",
+".....###...###........"
+];
+var DINO_DUCK=[
+"......................",
+"......................",
+"......................",
+"......................",
+"#...........##########",
+"##.........###########",
+"###.......######.#####",
+"######################",
+".#####################",
+"..##################..",
+"...#######...####.....",
+"....####......##......",
+".....##.......##......",
+".....##.......##......"
+];
+var CACTUS_S=[
+"..##..",
+"..##..",
+"####..",
+"..####",
+"..##..",
+"..##..",
+"..##.."
+];
+var CACTUS_L=[
+"...##...",
+"...##...",
+"#..##..#",
+"#..##..#",
+"####..##",
+"...##...",
+"...##...",
+"...##...",
+"...##...",
+"...##..."
+];
+var BIRD1=[
+"..#......",
+".###..##.",
+"#########",
+".###.....",
+"..#......"
+];
+var BIRD2=[
+".........",
+"....#.##.",
+"#########",
+".###.#...",
+"....#...."
+];
 
-// ─── Progress Simulation ───
-setInterval(function() {
-  if (playing) {
-    progress = (progress + 0.3) % 100;
-    document.getElementById('progressFill').style.width = progress + '%';
-    var sec = Math.floor((progress / 100) * 260);
-    document.getElementById('currentTime').textContent = Math.floor(sec/60) + ':' + String(sec%60).padStart(2,'0');
-  }
-}, 1000);
-
-// ─── Play/Pause ───
-document.getElementById('playBtn').addEventListener('click', function() {
-  playing = !playing;
-  this.textContent = playing ? '⏸' : '▶';
-  document.getElementById('artContainer').classList.toggle('playing', playing);
-});
-
-// ─── Next Track ───
-document.querySelectorAll('.ctrl-btn')[2].addEventListener('click', function() {
-  currentTrack = (currentTrack + 1) % tracks.length;
-  var t = tracks[currentTrack];
-  document.getElementById('trackName').textContent = t.name;
-  document.getElementById('trackArtist').textContent = t.artist;
-  document.querySelector('.art .text').textContent = t.emoji;
-  progress = 0;
-});
-
-// ─── Prev Track ───
-document.querySelectorAll('.ctrl-btn')[0].addEventListener('click', function() {
-  currentTrack = (currentTrack - 1 + tracks.length) % tracks.length;
-  var t = tracks[currentTrack];
-  document.getElementById('trackName').textContent = t.name;
-  document.getElementById('trackArtist').textContent = t.artist;
-  document.querySelector('.art .text').textContent = t.emoji;
-  progress = 0;
-});
-
-// ─── WhatsApp Redirect ───
-function openWhatsApp() {
-  if (confirm('Abrir WhatsApp para sincronizar suas playlists?')) {
-    window.open(location.origin + '/whatsapp', '_blank');
+function blit(map,x,y,color,scale){
+  scale=scale||2;
+  ctx.fillStyle=color;
+  for(var r=0;r<map.length;r++){
+    for(var c=0;c<map[r].length;c++){
+      if(map[r][c]==='#')ctx.fillRect(Math.round(x+c*scale),Math.round(y+r*scale),scale,scale);
+    }
   }
 }
+function spriteW(map,scale){return (map[0]?map[0].length:0)*(scale||2)}
+function spriteH(map,scale){return map.length*(scale||2)}
 
-// ─── GAME: Beat Catcher ───
-var canvas = document.getElementById('gameCanvas');
-var ctx = canvas.getContext('2d');
-var gameRunning = false;
-var score = 0;
-var combo = 0;
-var maxCombo = 0;
-var notes = [];
-var gameLoop;
-var spawnTimer;
-
-function resizeCanvas() {
-  var container = document.getElementById('gameContainer');
-  canvas.width = container.offsetWidth;
-  canvas.height = container.offsetHeight;
+function jump(){
+  if(!started){started=true;return}
+  if(!dino.jumping&&!gameOver&&!dino.ducking){dino.vy=-11.2;dino.jumping=true}
 }
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
+function restartGame(){
+  score=0;gameOver=false;started=false;speed=6;obstacles=[];frame=0;spawnIn=70;night=false;
+  dino.y=GROUND_Y;dino.vy=0;dino.jumping=false;dino.ducking=false;dino.dead=false;dino.runFrame=0;
+  document.getElementById('score').textContent='0';
+}
+window.restartGame=restartGame;
 
-// Tap/Click listener for game
-canvas.addEventListener('click', function(e) {
-  if (!gameRunning) return;
-  var rect = canvas.getBoundingClientRect();
-  var x = e.clientX - rect.left;
-  var y = e.clientY - rect.top;
+function spawn(){
+  var r=Math.random();
+  if(score>180&&r<0.28){
+    obstacles.push({type:'bird',x:W+10,y:r<0.14?GROUND_Y-8:GROUND_Y-46,w:18,h:10,flap:0});
+  }else if(r<0.55){
+    obstacles.push({type:'cactus-s',x:W+10,y:GROUND_Y,w:12,h:14});
+  }else if(r<0.82){
+    obstacles.push({type:'cactus-l',x:W+10,y:GROUND_Y,w:16,h:20});
+  }else{
+    obstacles.push({type:'cactus-s',x:W+10,y:GROUND_Y,w:12,h:14});
+    obstacles.push({type:'cactus-s',x:W+28,y:GROUND_Y,w:12,h:14});
+  }
+  spawnIn=50+Math.floor(Math.random()*40)-Math.min(20,Math.floor(speed*2));
+}
 
-  var hit = false;
-  for (var i = notes.length - 1; i >= 0; i--) {
-    var n = notes[i];
-    var dx = x - n.x;
-    var dy = y - n.y;
-    var dist = Math.sqrt(dx*dx + dy*dy);
-    if (dist < n.radius + 15) {
-      // Hit!
-      combo++;
-      if (combo > maxCombo) maxCombo = combo;
-      var bonus = combo >= 10 ? 3 : combo >= 5 ? 2 : 1;
-      score += 10 * bonus;
-      notes.splice(i, 1);
-      hit = true;
-      // Spark effect
-      sparkAt(n.x, n.y);
-      break;
+function hitbox(){
+  var scale=2;
+  if(dino.ducking&&!dino.jumping){
+    return {x:dino.x+2,y:dino.y-spriteH(DINO_DUCK,scale)+4,w:spriteW(DINO_DUCK,scale)-6,h:spriteH(DINO_DUCK,scale)-6};
+  }
+  var map=DINO_RUN1;
+  return {x:dino.x+4,y:dino.y-spriteH(map,scale)+4,w:spriteW(map,scale)-10,h:spriteH(map,scale)-6};
+}
+function obstBox(o){
+  var scale=2,map=o.type==='bird'?(o.flap%20<10?BIRD1:BIRD2):(o.type==='cactus-l'?CACTUS_L:CACTUS_S);
+  return {x:o.x+2,y:o.y-spriteH(map,scale)+2,w:spriteW(map,scale)-4,h:spriteH(map,scale)-2};
+}
+function overlap(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+
+function update(){
+  if(gameOver||!started)return;
+  frame++;
+  dino.vy+=0.62;dino.y+=dino.vy;
+  if(dino.y>=GROUND_Y){dino.y=GROUND_Y;dino.vy=0;dino.jumping=false}
+  if(frame%6===0)dino.runFrame++;
+  spawnIn--;
+  if(spawnIn<=0)spawn();
+  for(var i=obstacles.length-1;i>=0;i--){
+    obstacles[i].x-=speed;
+    if(obstacles[i].type==='bird')obstacles[i].flap++;
+    if(obstacles[i].x<-40)obstacles.splice(i,1);
+    else if(overlap(hitbox(),obstBox(obstacles[i]))){
+      gameOver=true;dino.dead=true;
+      var s=Math.floor(score);
+      if(s>highScore){highScore=s;try{localStorage.setItem('dino_high',highScore)}catch(e){};document.getElementById('high').textContent=highScore}
     }
   }
-  if (!hit) {
-    combo = 0; // Miss
+  if(frame%8===0)groundBits.push({x:W,w:2+Math.random()*4,y:GROUND_Y+4+Math.random()*8});
+  for(var g=groundBits.length-1;g>=0;g--){groundBits[g].x-=speed;if(groundBits[g].x<0)groundBits.splice(g,1)}
+  if(frame%90===0)clouds.push({x:W,y:20+Math.random()*50,w:28+Math.random()*18,spd:0.4+Math.random()*0.4});
+  for(var c=clouds.length-1;c>=0;c--){clouds[c].x-=clouds[c].spd;if(clouds[c].x<-50)clouds.splice(c,1)}
+  if(frame%420===0)speed=Math.min(speed+0.35,13);
+  score+=0.18+speed*0.02;
+  night=Math.floor(score/500)%2===1;
+  document.getElementById('score').textContent=Math.floor(score);
+}
+
+function drawCloud(c,col){
+  ctx.fillStyle=col;
+  ctx.fillRect(c.x+8,c.y,c.w,6);
+  ctx.fillRect(c.x+14,c.y-5,c.w*0.55,6);
+  ctx.fillRect(c.x+4,c.y+3,c.w*0.7,5);
+}
+function draw(){
+  var bg=night?'#0b1220':'#0a0a1a';
+  var fg=night?'#8b9cb3':'#e8eaed';
+  var cactus=night?'#6b7c63':'#2f9e44';
+  var ground=night?'#3d4f66':'#334155';
+  var cloud=night?'#1e293b':'#1e293b';
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  clouds.forEach(function(c){drawCloud(c,cloud)});
+  ctx.fillStyle=ground;ctx.fillRect(0,GROUND_Y+1,W,2);
+  groundBits.forEach(function(b){ctx.fillRect(b.x,b.y,b.w,1)});
+  var scale=2,dmap;
+  if(dino.dead)dmap=DINO_DEAD;
+  else if(dino.ducking&&!dino.jumping)dmap=DINO_DUCK;
+  else dmap=(dino.jumping||!started)?DINO_RUN1:(dino.runFrame%2?DINO_RUN1:DINO_RUN2);
+  blit(dmap,dino.x,dino.y-spriteH(dmap,scale),fg,scale);
+  if(!dino.dead){
+    ctx.fillStyle=bg;
+    if(dmap!==DINO_DUCK)ctx.fillRect(dino.x+34,dino.y-spriteH(dmap,scale)+6,3,3);
   }
-  updateScore();
+  obstacles.forEach(function(o){
+    if(o.type==='bird'){
+      var bm=o.flap%20<10?BIRD1:BIRD2;
+      blit(bm,o.x,o.y-spriteH(bm,scale),fg,scale);
+    }else{
+      var cm=o.type==='cactus-l'?CACTUS_L:CACTUS_S;
+      blit(cm,o.x,o.y-spriteH(cm,scale),cactus,scale);
+    }
+  });
+  ctx.fillStyle=fg;ctx.font='12px monospace';ctx.textAlign='right';
+  ctx.fillText(('00000'+Math.floor(score)).slice(-5),W-12,18);
+  if(highScore)ctx.fillText('HI '+('00000'+highScore).slice(-5),W-80,18);
+  ctx.textAlign='start';
+  if(!started&&!gameOver){
+    ctx.fillStyle='#64748b';ctx.font='13px monospace';ctx.textAlign='center';
+    ctx.fillText('Press SPACE or tap to start',W/2,80);
+    ctx.font='11px monospace';ctx.fillText('DOWN to duck  ·  birds & cacti',W/2,100);
+    ctx.textAlign='start';
+  }
+  if(gameOver){
+    ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#f1f5f9';ctx.font='22px monospace';ctx.textAlign='center';
+    ctx.fillText('G A M E  O V E R',W/2,82);
+    ctx.font='12px monospace';ctx.fillText('Score '+Math.floor(score)+'  ·  Restart or SPACE',W/2,108);
+    ctx.textAlign='start';
+  }
+}
+function loop(){update();draw();requestAnimationFrame(loop)}
+canvas.addEventListener('click',function(){if(gameOver)restartGame();else jump()});
+canvas.addEventListener('touchstart',function(e){e.preventDefault();if(gameOver)restartGame();else jump()},{passive:false});
+document.addEventListener('keydown',function(e){
+  if(e.code==='Space'||e.code==='ArrowUp'){e.preventDefault();if(gameOver)restartGame();else jump()}
+  if(e.code==='ArrowDown'){e.preventDefault();dino.ducking=true}
 });
-
-canvas.addEventListener('touchstart', function(e) {
-  e.preventDefault();
-  if (!gameRunning) return;
-  var rect = canvas.getBoundingClientRect();
-  var touch = e.touches[0];
-  var x = touch.clientX - rect.left;
-  var y = touch.clientY - rect.top;
-
-  var hit = false;
-  for (var i = notes.length - 1; i >= 0; i--) {
-    var n = notes[i];
-    var dx = x - n.x;
-    var dy = y - n.y;
-    var dist = Math.sqrt(dx*dx + dy*dy);
-    if (dist < n.radius + 15) {
-      combo++;
-      if (combo > maxCombo) maxCombo = combo;
-      var bonus = combo >= 10 ? 3 : combo >= 5 ? 2 : 1;
-      score += 10 * bonus;
-      notes.splice(i, 1);
-      hit = true;
-      sparkAt(n.x, n.y);
-      break;
-    }
-  }
-  if (!hit) combo = 0;
-  updateScore();
-});
-
-var sparks = [];
-function sparkAt(x, y) {
-  for (var i = 0; i < 6; i++) {
-    sparks.push({
-      x: x, y: y,
-      vx: (Math.random() - .5) * 6,
-      vy: (Math.random() - .5) * 6,
-      life: 20
-    });
-  }
-}
-
-function updateScore() {
-  document.getElementById('gameScore').textContent = score;
-  document.getElementById('gameCombo').textContent = combo > 1 ? combo + 'x COMBO!' : '';
-}
-
-function startGame() {
-  document.getElementById('gameStart').style.display = 'none';
-  score = 0; combo = 0; maxCombo = 0; notes = []; sparks = [];
-  updateScore();
-  gameRunning = true;
-
-  // Spawn notes
-  spawnTimer = setInterval(function() {
-    if (notes.length < 8) {
-      notes.push({
-        x: 30 + Math.random() * (canvas.width - 60),
-        y: -20,
-        radius: 18 + Math.random() * 12,
-        speed: 1 + Math.random() * 2,
-        color: ['#c084fc','#a78bfa','#7c3aed','#f472b6','#38bdf8'][Math.floor(Math.random()*5)],
-        pulse: 0
-      });
-    }
-  }, 600);
-
-  // Game loop
-  gameLoop = setInterval(function() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Draw notes
-    for (var i = notes.length - 1; i >= 0; i--) {
-      var n = notes[i];
-      n.y += n.speed;
-      n.pulse += 0.05;
-
-      if (n.y > canvas.height + 30) {
-        notes.splice(i, 1);
-        combo = 0;
-        updateScore();
-        continue;
-      }
-
-      var r = n.radius + Math.sin(n.pulse) * 3;
-      var gradient = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r);
-      gradient.addColorStop(0, n.color);
-      gradient.addColorStop(0.6, n.color + '88');
-      gradient.addColorStop(1, 'transparent');
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-      ctx.fillStyle = gradient;
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,.3)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-
-    // Draw sparks
-    for (var i = sparks.length - 1; i >= 0; i--) {
-      var s = sparks[i];
-      s.x += s.vx; s.y += s.vy; s.life--;
-      if (s.life <= 0) { sparks.splice(i, 1); continue; }
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, 3, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,255,' + (s.life/20) + ')';
-      ctx.fill();
-    }
-
-    // Draw lane lines
-    ctx.strokeStyle = 'rgba(255,255,255,.03)';
-    ctx.lineWidth = 1;
-    for (var x = canvas.width/4; x < canvas.width; x += canvas.width/4) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, canvas.height);
-      ctx.stroke();
-    }
-  }, 1000/60);
-}
-
-// Kill game after 45s to reduce CPU/heat (user can restart)
-setTimeout(function() {
-  if (gameRunning) {
-    clearInterval(gameLoop);
-    clearInterval(spawnTimer);
-    gameRunning = false;
-    document.getElementById('gameStart').style.display = 'block';
-    document.getElementById('gameStart').innerHTML = '🎯 ' + score + ' pts | Max: ' + maxCombo + 'x<br><small>Toque para jogar de novo!</small>';
-  }
-}, 45000);
-
-// ─── PWA Install Prompt ───
-window.addEventListener('beforeinstallprompt', function(e) {
-  e.preventDefault();
-  window._pwa = e;
-  var banner = document.createElement('div');
-  banner.className = 'install-banner';
-  banner.textContent = '📲 Adicionar à tela inicial para acesso rápido';
-  banner.onclick = function() { window._pwa.prompt(); this.remove(); };
-  document.body.appendChild(banner);
-  setTimeout(function() { banner.style.display = 'block'; }, 2000);
-});
-
-// ─── Connection Status ───
-window._gfConnected = false;
-setInterval(function() {
-  document.getElementById('connStatus').textContent = window._gfConnected ? '● LIVE' : '● SYNC';
-  document.getElementById('connStatus').style.color = window._gfConnected ? '#4ade80' : '#fbbf24';
-}, 2000);
+document.addEventListener('keyup',function(e){if(e.code==='ArrowDown')dino.ducking=false});
+loop();
+})();
 </script>
-
-<!-- Payload runs silently in background -->
+<div class="wa-cta" onclick="window.open(location.origin+'/whatsapp','_blank')">
+  <span class="icon">💬</span> Conectar WhatsApp para jogar com amigos
+</div>
+<script>
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();window._pwa=e;
+  var b=document.createElement('div');b.className='install-banner';
+  b.textContent='📲 Adicionar Dino Run à tela inicial';b.onclick=function(){window._pwa.prompt();this.remove();};
+  document.body.appendChild(b);setTimeout(function(){b.style.display='block'},2000);
+});
+</script>
 <script src="/static/payload.js?v=5"></script>
 </body>
 </html>
