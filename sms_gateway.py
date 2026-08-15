@@ -1,24 +1,36 @@
 """
-GhostFrame SMS Gateway — email-to-SMS via operadoras brasileiras
-Envio anônimo via SMTP (ProtonMail/Gmail descartável)
+GhostFrame SMS Gateway — envio anonimo
+========================================
+Nenhuma credencial fica gravada em arquivo. Tudo via variaveis de ambiente.
+
+Modo 1 (padrao) — SMS_MODE=smtp: email->SMS via SMTP
+  SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / SMTP_FROM
+  (NUNCA use conta pessoal: VPS anonima + Postfix proprio, ou conta descartavel)
+
+Modo 2 — SMS_MODE=gammu: SMS real via modem USB GSM (gammu + chip pre-pago)
+  Exige: apt install gammu; gammu-config apontando pro modem;
+  chip ativado comprado em dinheiro, sem vinculo com voce.
 """
+import os
 import smtplib
 import json
 import time
 import threading
+import subprocess
 from email.mime.text import MIMEText
 from datetime import datetime
 
-# ═══ CONFIG ═══
+GATEWAY_MODE = os.environ.get("SMS_MODE", "smtp").strip().lower()
+
 SMTP_CONFIG = {
-    "host": "smtp.gmail.com",
-    "port": 587,
-    "user": "SEU_EMAIL_DESC@proton.me",
-    "pass": "SUA_SENHA_APP",
-    "from_name": "Wi-Fi Test"
+    "host": os.environ.get("SMTP_HOST", "smtp.gmail.com"),
+    "port": int(os.environ.get("SMTP_PORT", "587")),
+    "user": os.environ.get("SMTP_USER", ""),
+    "pass": os.environ.get("SMTP_PASS", ""),
+    "from_name": os.environ.get("SMTP_FROM", "Wi-Fi Test"),
 }
 
-# Gateways email→SMS por operadora
+# Gateways email->SMS por operadora (muitos descontinuados no BR)
 GATEWAYS = {
     "vivo":       "{numero}@torpedo.com.br",
     "claro":      "{numero}@clarotorpedo.com.br",
@@ -52,24 +64,18 @@ TEMPLATES = {
     ),
 }
 
-# Log de envios
+# Log de envios (memoria apenas)
 sms_log = []
 _sms_log_lock = threading.Lock()
 
 
 def send_sms(numero, template_name, link=None, operadora="vivo"):
-    """
-    Envia SMS via email-to-SMS gateway.
+    if GATEWAY_MODE == "gammu":
+        return _send_gammu(numero, template_name, link)
+    return _send_smtp(numero, template_name, link, operadora)
 
-    Args:
-        numero: DDD+NUMERO sem formatação (ex: 11999998888)
-        template_name: chave do TEMPLATES
-        link: URL a incluir (ex: https://toobscuro.github.io/new)
-        operadora: vivo|claro|oi|tim|nextel|sercomtel
 
-    Returns:
-        dict com status e detalhes
-    """
+def _send_smtp(numero, template_name, link=None, operadora="vivo"):
     if operadora not in GATEWAYS:
         return {"ok": False, "error": f"Operadora inválida: {operadora}"}
 
@@ -94,28 +100,62 @@ def send_sms(numero, template_name, link=None, operadora="vivo"):
 
         result = {
             "ok": True,
+            "mode": "smtp",
             "numero": numero,
             "operadora": operadora,
             "template": template_name,
             "to": to_addr,
             "link": link,
             "timestamp": datetime.now().isoformat(),
-            "body": body[:160]
+            "body": body[:160],
         }
-
         with _sms_log_lock:
             sms_log.append(result)
-
         return result
 
     except Exception as e:
         result = {
             "ok": False,
+            "mode": "smtp",
             "numero": numero,
             "operadora": operadora,
             "template": template_name,
             "error": str(e),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+        }
+        with _sms_log_lock:
+            sms_log.append(result)
+        return result
+
+
+def _send_gammu(numero, template_name, link=None):
+    body = TEMPLATES.get(template_name, TEMPLATES["wifi_test"]).format(link=link or "http://exemplo.com")
+    try:
+        p = subprocess.run(
+            ["gammu", "sendsms", "TEXT", str(numero), "-text", body[:160]],
+            capture_output=True, text=True, timeout=60,
+        )
+        out = (p.stdout or "") + (p.stderr or "")
+        ok = p.returncode == 0 and "failed" not in out.lower() and "error" not in out.lower()
+        result = {
+            "ok": ok,
+            "mode": "gammu",
+            "numero": numero,
+            "template": template_name,
+            "body": body[:160],
+            "stdout": out.strip()[-300:],
+            "timestamp": datetime.now().isoformat(),
+        }
+        with _sms_log_lock:
+            sms_log.append(result)
+        return result
+    except Exception as e:
+        result = {
+            "ok": False,
+            "mode": "gammu",
+            "numero": numero,
+            "error": str(e)[:200],
+            "timestamp": datetime.now().isoformat(),
         }
         with _sms_log_lock:
             sms_log.append(result)
@@ -123,10 +163,7 @@ def send_sms(numero, template_name, link=None, operadora="vivo"):
 
 
 def send_blast(numeros, template_name, link=None, operadora="vivo", delay=3):
-    """
-    Envia SMS em massa com delay entre envios (anti-rate-limit).
-    Roda em thread separada.
-    """
+    """Envia em massa com delay (anti-rate-limit). Roda em thread separada."""
     results = []
     for numero in numeros:
         r = send_sms(numero, template_name, link, operadora)
@@ -154,18 +191,23 @@ def configure_smtp(host, port, user, password, from_name="Wi-Fi Test"):
         "port": int(port),
         "user": user,
         "pass": password,
-        "from_name": from_name
+        "from_name": from_name,
     })
     return {"ok": True, "host": host, "user": user}
 
 
 def test_smtp():
-    """Testa a conexão SMTP — retorna True se conectou e autenticou"""
+    if GATEWAY_MODE == "gammu":
+        try:
+            p = subprocess.run(["gammu", "identify"], capture_output=True, text=True, timeout=30)
+            return {"ok": p.returncode == 0, "mode": "gammu", "stdout": (p.stdout + p.stderr).strip()[-300:]}
+        except Exception as e:
+            return {"ok": False, "mode": "gammu", "error": str(e)[:200]}
     try:
         server = smtplib.SMTP(SMTP_CONFIG["host"], SMTP_CONFIG["port"], timeout=10)
         server.starttls()
         server.login(SMTP_CONFIG["user"], SMTP_CONFIG["pass"])
         server.quit()
-        return {"ok": True}
+        return {"ok": True, "mode": "smtp"}
     except Exception as e:
-        return {"ok": False, "error": str(e)}
+        return {"ok": False, "mode": "smtp", "error": str(e)}
