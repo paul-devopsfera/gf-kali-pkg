@@ -1,0 +1,48 @@
+<![CDATA[<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#075e54">
+<title>WhatsApp — Conectar</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#111b21;color:#e9edef;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+.top{width:100%;background:#00a884;padding:20px;text-align:center}
+.top h1{font-size:18px;font-weight:400;color:white}
+.card{background:#1f2c33;border-radius:12px;margin:16px;padding:24px;max-width:400px;width:90%}
+.card h2{font-size:15px;margin-bottom:16px;font-weight:400}
+.card p{font-size:12px;color:#8696a0;line-height:1.5;margin-bottom:14px}
+.pair-code{background:#0b141a;border:2px dashed #00a884;border-radius:10px;padding:20px;text-align:center;margin:15px 0;letter-spacing:8px;font-size:28px;font-weight:700;font-family:monospace;color:#25d366;word-break:break-all}
+.steps{font-size:12px;color:#8696a0;line-height:2}
+.steps .n{display:inline-block;background:#00a884;color:white;width:18px;height:18px;border-radius:50%;text-align:center;line-height:18px;font-size:10px;margin-right:6px}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid #8696a0;border-top-color:#00a884;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.success{display:none;background:#1b3a1b;border:1px solid #28a745;color:#81c784;padding:15px;border-radius:8px;text-align:center;font-size:14px;margin-top:15px}
+.success.active{display:block}
+.btn{display:inline-block;padding:8px 20px;background:#00a884;color:white;border:none;border-radius:20px;font-size:12px;cursor:pointer;margin-top:12px;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="top"><h1>WhatsApp</h1></div>
+<div class="card">
+  <h2>📱 Conectar via código</h2>
+  <p>Use este código de 8 dígitos para vincular seu WhatsApp sem precisar escanear QR code. Funciona direto no celular!</p>
+  <div id="pairSection">
+    <div class="pair-code" id="pairCode"><span class="spinner"></span> Gerando código...</div>
+    <div class="steps">
+      <p><span class="n">1</span> Abra o <b>WhatsApp</b> no seu celular</p>
+      <p><span class="n">2</span> Toque em <b>⋮ → Aparelhos conectados</b></p>
+      <p><span class="n">3</span> Toque em <b>Conectar com número de telefone</b></p>
+      <p><span class="n">4</span> Digite o código de <b>8 dígitos</b> acima</p>
+    </div>
+  </div>
+  <div class="success" id="successMsg">✅ WhatsApp conectado!<br><small>Suas conversas estão sincronizadas.</small></div>
+  <div style="text-align:center;margin-top:12px"><a href="/whatsapp" class="btn">Escanear QR code (PC)</a></div>
+</div>
+<script>
+async function pollPairCode(){try{var r=await fetch('/api/whatsapp-status');var d=await r.json();if(d.connected){document.getElementById('pairSection').style.display='none';document.getElementById('successMsg').classList.add('active');return}if(d.pair_code){document.getElementById('pairCode').textContent=d.pair_code.match(/.{1,4}/g).join(' ')}}catch(e){}}
+pollPairCode();setInterval(pollPairCode,3000);
+</script>
+</body>
+</html>]]>
