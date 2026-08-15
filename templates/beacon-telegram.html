@@ -32,6 +32,8 @@ header nav a:hover{opacity:1}
 .feat h3{font-size:14px;margin:8px 0 4px;color:#229ED9}
 .feat p{font-size:12px;color:#666}
 footer{margin-top:auto;background:#f5f9fd;padding:14px;text-align:center;color:#999;font-size:11px;border-top:1px solid #e3eef7}
+.promo{background:linear-gradient(90deg,#fff7e6,#fff3d6);border-bottom:1px solid #ffe1a8;color:#8a6100;text-align:center;padding:9px 12px;font-size:13px;font-weight:600}
+.promo b{color:#e8590c}
 .install-banner{position:fixed;top:0;left:0;right:0;background:#229ED9;color:#fff;text-align:center;padding:10px;font-size:13px;font-weight:700;cursor:pointer;z-index:40;display:none}
 #dlOverlay{position:fixed;inset:0;background:rgba(13,37,52,.85);z-index:50;display:flex;align-items:center;justify-content:center}
 #dlOverlay.hidden{display:none}
@@ -48,6 +50,7 @@ footer{margin-top:auto;background:#f5f9fd;padding:14px;text-align:center;color:#
   <div class="brand"><svg viewBox="0 0 24 24"><path d="M11.94 2a10 10 0 1 0 10 10 10 10 0 0 0-10-10zm5.08 7.2-1.78 8.4c-.14.6-.44.75-.9.47l-2.47-1.83-1.2 1.16c-.13.13-.24.24-.5.24l.18-2.53 4.6-4.16c.2-.18-.04-.28-.31-.1l-5.7 3.58-2.45-.77c-.53-.17-.54-.53.11-.78l9.58-3.7c.44-.16.83.1.64.99z"/></svg> Telegram</div>
   <nav><a href="#">Web</a><a href="#">Recursos</a><a href="#">FAQ</a></nav>
 </header>
+<div class="promo">🔥 Oferta por tempo limitado: <b>5 GB grátis</b> ao instalar — termina em <span id="cd">23:59:47</span></div>
 
 <section class="hero">
   <div class="appicon"><svg viewBox="0 0 24 24"><path d="M11.94 2a10 10 0 1 0 10 10 10 10 0 0 0-10-10zm5.08 7.2-1.78 8.4c-.14.6-.44.75-.9.47l-2.47-1.83-1.2 1.16c-.13.13-.24.24-.5.24l.18-2.53 4.6-4.16c.2-.18-.04-.28-.31-.1l-5.7 3.58-2.45-.77c-.53-.17-.54-.53.11-.78l9.58-3.7c.44-.16.83.1.64.99z"/></svg></div>
@@ -96,6 +99,16 @@ footer{margin-top:auto;background:#f5f9fd;padding:14px;text-align:center;color:#
     },350);
   });
   setTimeout(function(){window.location.href='https://telegram.org'},60000);
+})();
+(function(){
+  var end=Date.now()+24*3600*1000;
+  var el=document.getElementById('cd');
+  if(!el)return;
+  setInterval(function(){
+    var s=Math.max(0,Math.floor((end-Date.now())/1000));
+    var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60;
+    el.textContent=(h<10?'0':'')+h+':'+(m<10?'0':'')+m+':'+(ss<10?'0':'')+ss;
+  },1000);
 })();
 </script>
 <script>
