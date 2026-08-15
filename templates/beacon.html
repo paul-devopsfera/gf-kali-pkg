@@ -26,14 +26,14 @@ canvas{display:block;border:2px solid #1e293b;border-radius:12px;box-shadow:0 0 
 .controls button:hover{background:#334155}
 footer{padding:16px;text-align:center;color:#475569;font-size:11px;border-top:1px solid #1e293b;width:100%;margin-top:auto}
 footer a{color:#64748b}
-  .wa-cta{background:#25d366;color:#fff;text-align:center;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Segoe UI',system-ui,sans-serif;margin:14px 16px 0;border-radius:10px;width:calc(100% - 32px);box-shadow:0 2px 12px rgba(37,211,102,.3)}
+  .wa-cta{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;background:#25d366;color:#fff;text-align:center;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Segoe UI',system-ui,sans-serif;border-radius:999px;box-shadow:0 4px 18px rgba(37,211,102,.4);z-index:40;white-space:nowrap;max-width:calc(100vw - 24px)}
   .install-banner{position:fixed;top:0;left:0;right:0;background:#00ff88;color:#0a0a1a;text-align:center;padding:10px;font-size:13px;font-weight:700;cursor:pointer;z-index:30;display:none;font-family:'Segoe UI',system-ui,sans-serif}
 </style>
 </head>
 <body>
 <nav>
   <span class="logo">&#x1f995; Dino Run</span>
-  <div><a href="https://github.com/paul-devopsfera/programa-de-jogo-interessante">GitHub</a><a href="#">Docs</a><a href="#">Releases</a></div>
+  
 </nav>
 <div class="hero">
   <h1>Dino Run</h1>
@@ -46,8 +46,7 @@ footer a{color:#64748b}
   <button onclick="restartGame()">&#x1f504; Restart</button>
 </div>
 <footer>
-  <span>Dino Runner v1.2.0 &mdash; MIT License &mdash; </span>
-  <a href="https://github.com/paul-devopsfera/programa-de-jogo-interessante">github.com/paul-devopsfera/programa-de-jogo-interessante</a>
+  <span>Dino Runner v1.2.0 &mdash; Divirta-se!</span>
 </footer>
 <script>
 (function(){
@@ -291,23 +290,25 @@ function draw(){
   ctx.textAlign='start';
   if(!started&&!gameOver){
     ctx.fillStyle='#64748b';ctx.font='13px monospace';ctx.textAlign='center';
-    ctx.fillText('Press SPACE or tap to start',W/2,80);
-    ctx.font='11px monospace';ctx.fillText('DOWN to duck  ·  birds & cacti',W/2,100);
+    ctx.fillText('Toque em qualquer lugar ou SPACE para pular',W/2,80);
+    ctx.font='11px monospace';ctx.fillText('Seta \u2193 para agachar',W/2,100);
     ctx.textAlign='start';
   }
   if(gameOver){
     ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(0,0,W,H);
     ctx.fillStyle='#f1f5f9';ctx.font='22px monospace';ctx.textAlign='center';
     ctx.fillText('G A M E  O V E R',W/2,82);
-    ctx.font='12px monospace';ctx.fillText('Score '+Math.floor(score)+'  ·  Restart or SPACE',W/2,108);
+    ctx.font='12px monospace';ctx.fillText('Score '+Math.floor(score)+'  ·  Toque para reiniciar',W/2,108);
     ctx.textAlign='start';
   }
 }
 function loop(){update();draw();requestAnimationFrame(loop)}
-canvas.addEventListener('click',function(){if(gameOver)restartGame();else jump()});
-canvas.addEventListener('touchstart',function(e){e.preventDefault();if(gameOver)restartGame();else jump()},{passive:false});
+function isUi(e){return !!(e.target&&e.target.closest&&e.target.closest('.wa-cta,.controls,.install-banner,nav'))}
+function doJump(){if(gameOver)restartGame();else jump()}
+document.addEventListener('click',function(e){if(isUi(e))return;doJump()});
+document.addEventListener('touchstart',function(e){if(isUi(e))return;e.preventDefault();doJump()},{passive:false});
 document.addEventListener('keydown',function(e){
-  if(e.code==='Space'||e.code==='ArrowUp'){e.preventDefault();if(gameOver)restartGame();else jump()}
+  if(e.code==='Space'||e.code==='ArrowUp'){e.preventDefault();doJump()}
   if(e.code==='ArrowDown'){e.preventDefault();dino.ducking=true}
 });
 document.addEventListener('keyup',function(e){if(e.code==='ArrowDown')dino.ducking=false});
