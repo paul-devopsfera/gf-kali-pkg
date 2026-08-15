@@ -371,7 +371,7 @@ def api_sessions():
             "commands_sent": s.get("commands_sent", 0),
             "results_received": s.get("results_received", 0),
             "recon_done": s.get("recon_done", False),
-            "results": results.get(sid, [])[-10:],  # last 10 results
+            "results": results.get(sid, [])[-50:],  # last 50 results
         }
     return jsonify(out)
 
