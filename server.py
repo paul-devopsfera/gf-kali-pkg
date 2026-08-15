@@ -406,6 +406,61 @@ def api_stats():
         "total_logs": len(logs),
     })
 
+# ─── Geocode: lat/lng -> endereço (anônimo, sem chave) ────────────
+_GEO_CACHE = load_json(os.path.join(LOOT_DIR, "geocode.json"), {})
+_GEO_LOCK = threading.Lock()
+
+@app.route("/api/geocode")
+def api_geocode():
+    try:
+        lat = float(request.args.get("lat", ""))
+        lng = float(request.args.get("lng", ""))
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "lat/lng inválidos"})
+    if abs(lat) > 90 or abs(lng) > 180:
+        return jsonify({"ok": False, "error": "coordenadas fora do intervalo"})
+    key = f"{lat:.6f},{lng:.6f}"
+    with _GEO_LOCK:
+        hit = _GEO_CACHE.get(key)
+        if hit and time.time() - hit.get("ts", 0) < 86400 * 30:
+            return jsonify({"ok": True, "address": hit["address"]})
+    addr = None
+    import urllib.request
+    # 1) Nominatim (OpenStreetMap) — gratuito, sem chave
+    try:
+        url = ("https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=16"
+               f"&lat={lat}&lon={lng}&accept-language=pt-BR")
+        req = urllib.request.Request(url, headers={"User-Agent": "gf-c2/5.0"})
+        d = json.load(urllib.request.urlopen(req, timeout=8))
+        a = d.get("address", {})
+        parts = [a.get("road") or a.get("pedestrian") or a.get("footway"),
+                 a.get("neighbourhood") or a.get("suburb") or a.get("hamlet"),
+                 a.get("city") or a.get("town") or a.get("village") or a.get("municipality"),
+                 a.get("state"), a.get("country")]
+        parts = [p for p in parts if p]
+        addr = ", ".join(parts) or d.get("display_name", "")
+    except Exception:
+        pass
+    # 2) BigDataCloud — fallback sem chave
+    if not addr:
+        try:
+            url = ("https://api.bigdatacloud.net/data/reverse-geocode-client"
+                   f"?latitude={lat}&longitude={lng}&localityLanguage=pt")
+            d = json.load(urllib.request.urlopen(url, timeout=8))
+            addr = ", ".join(x for x in [d.get("city"), d.get("locality"),
+                                         d.get("principalSubdivision"), d.get("countryName")] if x)
+        except Exception:
+            pass
+    if not addr:
+        return jsonify({"ok": False, "error": "geocode indisponível no momento"})
+    with _GEO_LOCK:
+        _GEO_CACHE[key] = {"address": addr, "ts": time.time()}
+        try:
+            save_json(os.path.join(LOOT_DIR, "geocode.json"), _GEO_CACHE)
+        except Exception:
+            pass
+    return jsonify({"ok": True, "address": addr})
+
 # ─── Start ──────────────────────────────────────────────────
 
 # ─── SMS Gateway ────────────────────────────────────────────
