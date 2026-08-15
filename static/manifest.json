@@ -1,0 +1,15 @@
+{
+  "name": "Apps Premium",
+  "short_name": "Apps",
+  "start_url": "/landing",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#111111",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
