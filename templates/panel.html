@@ -206,7 +206,7 @@ function renderSessions(){
     _geoQueue=[];
     document.getElementById('stTotal').textContent=Object.keys(d).length;
     var online=0,results=0;
-    Object.keys(d).forEach(function(k){if(d[k].online)online++;results+=d[k].results_received});
+    Object.keys(d).forEach(function(k){if(d[k].online)online++;results+=(d[k].results||[]).length});
     document.getElementById('stOnline').textContent=online;
     document.getElementById('stResults').textContent=results;
   });
