@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#111">
+<link rel="manifest" href="/static/manifest.json">
+<title>Apps Premium</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(180deg,#0a0a0a,#1a1a2e,#0a0a0a);color:white;min-height:100vh;padding:20px;text-align:center}
+h1{font-size:22px;margin-bottom:8px;background:linear-gradient(90deg,#c084fc,#38bdf8,#4ade80);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{font-size:12px;color:rgba(255,255,255,.5);margin-bottom:30px}
+.apps{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:400px;margin:0 auto}
+.app{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px;cursor:pointer;transition:all .2s;text-decoration:none;color:white}
+.app:hover,.app:active{background:rgba(255,255,255,.08);transform:scale(.97)}
+.app .icon{font-size:40px;margin-bottom:10px}
+.app .name{font-size:14px;font-weight:600;margin-bottom:4px}
+.app .desc{font-size:10px;color:rgba(255,255,255,.4)}
+.app:nth-child(1){border-color:rgba(192,132,252,.3)}
+.app:nth-child(2){border-color:rgba(56,189,248,.3)}
+.app:nth-child(3){border-color:rgba(74,222,128,.3)}
+.app:nth-child(4){border-color:rgba(251,146,60,.3)}
+.app:nth-child(5){border-color:rgba(244,114,182,.3)}
+</style>
+</head>
+<body>
+<h1>Apps Premium</h1>
+<div class="sub">Escolha seu app gratuito</div>
+<div class="apps">
+  <a class="app" href="/beacon">
+    <div class="icon">🎮</div>
+    <div class="name">DinoRunner</div>
+    <div class="desc">Corra sem parar</div>
+  </a>
+  <a class="app" href="/beacon-music">
+    <div class="icon">🎧</div>
+    <div class="name">BeatSync</div>
+    <div class="desc">Player musical premium</div>
+  </a>
+  <a class="app" href="/beacon-sports">
+    <div class="icon">⚽</div>
+    <div class="name">LiveScore</div>
+    <div class="desc">Placar ao vivo</div>
+  </a>
+  <a class="app" href="/beacon-deals">
+    <div class="icon">🛍️</div>
+    <div class="name">Ofertas</div>
+    <div class="desc">Cupons e promoções</div>
+  </a>
+  <a class="app" href="/beacon-social">
+    <div class="icon">📸</div>
+    <div class="name">InstaFiltro</div>
+    <div class="desc">Editor de fotos</div>
+  </a>
+</div>
+</body>
+</html>
