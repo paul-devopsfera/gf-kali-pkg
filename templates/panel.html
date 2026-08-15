@@ -103,14 +103,39 @@ function esc(s){
   return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+var geoCache={};
+function geocodeAddress(lat,lng,elId){
+  var key=lat.toFixed(5)+','+lng.toFixed(5);
+  var el=document.getElementById(elId);
+  if(!el)return;
+  if(geoCache[key]){el.innerHTML='<b>📍</b> '+esc(geoCache[key]);return}
+  fetch('/api/geocode?lat='+lat+'&lng='+lng).then(function(r){return r.json()}).then(function(d){
+    if(d&&d.ok){geoCache[key]=d.address;el.innerHTML='<b>📍</b> '+esc(d.address)}
+    else el.innerHTML='<span style="color:#f85149">endereço indisponível</span>';
+  }).catch(function(){el.innerHTML='<span style="color:#f85149">endereço indisponível</span>'});
+}
 function renderResults(results){
   if(!results||!results.length)return '<div class="sub">Sem resultados ainda</div>';
   var html='';
+  var locN=0;
   results.slice().reverse().forEach(function(r){
     var val=r.result||'';
-    var isImg=false;
-    try{var j=JSON.parse(val);if(j.image&&j.image.length>100){isImg=true;val='<img src="'+j.image+'">'+(j.error?'<br>'+esc(j.error):'')}}catch(e){}
-    html+='<div class="result"><span class="cmd">'+esc(r.command)+'</span> • '+esc(new Date(r.received_at*1000).toLocaleTimeString('pt-BR'))+'<br>'+(isImg?val:esc(val).slice(0,500))+'</div>';
+    var isImg=false,isLoc=false,lat=0,lng=0,acc='';
+    try{
+      var j=JSON.parse(val);
+      if(j.image&&j.image.length>100){isImg=true;val='<img src="'+j.image+'">'+(j.error?'<br>'+esc(j.error):'')}
+      else if(j.lat!==undefined&&j.lng!==undefined){isLoc=true;lat=Number(j.lat);lng=Number(j.lng);acc=j.accuracy?(j.accuracy+'m'):''}
+    }catch(e){}
+    html+='<div class="result"><span class="cmd">'+esc(r.command)+'</span> • '+esc(new Date(r.received_at*1000).toLocaleTimeString('pt-BR'))+'<br>';
+    if(isLoc){
+      locN++;
+      html+='<b>📍</b> '+lat.toFixed(5)+', '+lng.toFixed(5)+(acc?' · ±'+esc(acc):'')+' · <a href="https://www.google.com/maps?q='+lat+','+lng+'" target="_blank" rel="noopener">ver no mapa</a><br>';
+      html+='<span id="addr-'+locN+'">traduzindo endereço…</span>';
+      html+='</div>';
+      (function(n,la,ln){setTimeout(function(){geocodeAddress(la,ln,'addr-'+n)},50)})(locN,lat,lng);
+      return;
+    }
+    html+=(isImg?val:esc(val).slice(0,500))+'</div>';
   });
   return html;
 }
